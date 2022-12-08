@@ -16,10 +16,22 @@ export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('mpiconv.helloWorld', () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello VS-Code!');
+		vscode.window.showInformationMessage('Hello VS-Code! ;)');
+	});
+
+	let timemsg = vscode.commands.registerCommand('mpiconv.tellTime', () => {
+		let datetime = new Date();
+		vscode.window.showInformationMessage('Current time is: ' + datetime.toString());
+	});
+
+	let replaceme = vscode.commands.registerCommand('mpiconv.replaceMe', () => {
+		let uri = vscode.window.activeTextEditor?.document.uri.toString();
+		if (uri === undefined) {uri = "none";}
+		vscode.window.showInformationMessage(uri);
 	});
 
 	context.subscriptions.push(disposable);
+	context.subscriptions.push(timemsg);
 }
 
 // This method is called when your extension is deactivated

@@ -18,6 +18,14 @@
       {
         "command": "mpiconv.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "mpiconv.tellTime",
+        "title": "What does the clock say?"
+      },
+      {
+        "command": "mpiconv.replaceMe",
+        "title": "Replace Me"
       }
     ]
   },

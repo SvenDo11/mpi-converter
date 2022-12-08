@@ -33,39 +33,22 @@ Calling out known issues can help limit users opening duplicate issues against y
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1
 
-### 1.0.0
+Initial project frame.
+Added commands: "Hello World", "What does the clock say?" and "Replace Me" 
 
-Initial release of ...
+# Notes
 
-### 1.0.1
+## Next steps
 
-Fixed issue #.
+1. use `vscode.window.activeEditor` to get the text of the current file.
+2. find and replace specific text snippets
+3. save the modified version in a new file
+4. add a dialog to let user know whats happening and to let them decide
+5. restrict command to c++ files
+6. 
 
-### 1.1.0
+## Future concept
 
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+- thing about using code-lense
