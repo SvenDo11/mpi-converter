@@ -25,13 +25,37 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	let replaceme = vscode.commands.registerCommand('mpiconv.replaceMe', () => {
-		let uri = vscode.window.activeTextEditor?.document.uri.toString();
-		if (uri === undefined) {uri = "none";}
-		vscode.window.showInformationMessage(uri);
+		let activeEditor = vscode.window.activeTextEditor;
+		if (activeEditor === undefined) {
+			return;
+		}
+
+		let codestr = activeEditor.document.getText();
+		let positions:vscode.Position[] = [];
+		let lastIndex = 0;
+		while(true) {
+			let index = codestr.indexOf("// REPLACEME", lastIndex);
+			if ( index === -1) {
+				break;
+			}
+			positions = positions.concat(activeEditor.document.positionAt(index));
+			lastIndex = index + 1;
+			console.log("Found string at postion " + index);
+		}
+
+		console.log(positions);
+
+		activeEditor.edit( (editBuilder) => {
+			positions.forEach((value) => {
+				editBuilder.replace(value, "// Replaced!");
+			});
+		});
+		vscode.window.showInformationMessage("Done!");
 	});
 
 	context.subscriptions.push(disposable);
 	context.subscriptions.push(timemsg);
+	context.subscriptions.push(replaceme);
 }
 
 // This method is called when your extension is deactivated
