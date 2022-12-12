@@ -5,6 +5,7 @@ import {
   TextEditorEdit,
   QuickPickOptions,
   Selection,
+  TextEditorRevealType
 } from "vscode";
 
 const yesStrings = ["yes", "ja", "y", "1"];
@@ -35,6 +36,7 @@ export async function replacer() {
   const searchString = "// REPLACEME";
   const replaceString = "// Replaced!";
 
+  // Finding the  positions of the strings to replace
   let codestr = activeEditor.document.getText();
   let positions: Position[] = [];
   let lastIndex = 0;
@@ -48,18 +50,16 @@ export async function replacer() {
     console.log("Found string at postion " + index);
   }
 
+  // User permited replacing
   for(let i = 0; i < positions.length; i++){
 	let value = positions[i];
-    let activeEditor = window.activeTextEditor;
-    if (activeEditor === undefined) {
-      return;
-    }
-
     let rep = new Range(
       value,
       new Position(value.line, value.character + searchString.length)
     );
+    // Highlighting and revealing
     activeEditor.selection = new Selection(rep.start, rep.end);
+    activeEditor.revealRange(rep, TextEditorRevealType.InCenter);
     let result = await confirmationDialog();
 
     if (result) {
