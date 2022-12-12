@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { replacer, showQuickPick } from './replaceme';
+import { replacer } from './replaceme';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -26,34 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	let replaceme = vscode.commands.registerCommand('mpiconv.replaceMe', () => {
-		const searchString = "// REPLACEME";
-		const replaceString = "// Replaced!";
-
-		let activeEditor = vscode.window.activeTextEditor;
-		if (activeEditor === undefined) {
-			return;
-		}
-
-		let codestr = activeEditor.document.getText();
-		let positions:vscode.Position[] = [];
-		let lastIndex = 0;
-		while(true) {
-			let index = codestr.indexOf(searchString, lastIndex);
-			if ( index === -1) {
-				break;
-			}
-			positions = positions.concat(activeEditor.document.positionAt(index));
-			lastIndex = index + 1;
-			console.log("Found string at postion " + index);
-		}
-
-		activeEditor.edit( (editBuilder) => {
-			positions.forEach((value: vscode.Position) => {
-				let rep = new vscode.Range(value, new vscode.Position(value.line, value.character + searchString.length));
-				replacer(editBuilder, rep, replaceString);
-			});
-		});
-		vscode.window.showInformationMessage('Done! With result ${result}');
+		replacer();
 	});
 
 	context.subscriptions.push(disposable);
