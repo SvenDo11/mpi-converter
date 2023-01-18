@@ -8,24 +8,7 @@ import {
   TextEditorRevealType
 } from "vscode";
 
-const yesStrings = ["yes", "ja", "y", "1"];
-
-async function confirmationDialog() {
-  let i = 0;
-  let result = await window.showQuickPick(["yes", "no"], <QuickPickOptions>{
-    placeHolder: "Replace this?",
-    onDidSelectItem: (item) =>
-      window.showInformationMessage(`Focus ${++i}: ${item}`),
-  });
-  if (result !== undefined) {
-    // check for string validity
-    if (yesStrings.includes(result)) {
-      window.showInformationMessage("returning true");
-      return true;
-    }
-    return false;
-  }
-}
+import { confirmationDialog } from "./dialogs";
 
 export async function replacer() {
   let activeEditor = window.activeTextEditor;
@@ -60,7 +43,7 @@ export async function replacer() {
     // Highlighting and revealing
     activeEditor.selection = new Selection(rep.start, rep.end);
     activeEditor.revealRange(rep, TextEditorRevealType.InCenter);
-    let result = await confirmationDialog();
+    let result = await confirmationDialog("Replace this?");
 
     if (result) {
       window.showInformationMessage("Replacing!");

@@ -26,6 +26,10 @@
       {
         "command": "mpiconv.replaceMe",
         "title": "Replace Me"
+      },
+      {
+        "command": "mpiconv.convertToUnblocking",
+        "title": "Convert MPI statements"
       }
     ]
   },

@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { replacer } from './replaceme';
+import { ToUnblocking } from './toUnblocking';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -29,9 +30,15 @@ export function activate(context: vscode.ExtensionContext) {
 		replacer();
 	});
 
+	let convertToUnblocking = vscode.commands.registerCommand('mpiconv.convertToUnblocking', () => {
+		let toUnblocker = new ToUnblocking();
+		toUnblocker.main();
+	});
+
 	context.subscriptions.push(disposable);
 	context.subscriptions.push(timemsg);
 	context.subscriptions.push(replaceme);
+	context.subscriptions.push(convertToUnblocking);
 }
 
 // This method is called when your extension is deactivated
