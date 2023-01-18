@@ -12,13 +12,10 @@ export async function confirmationDialog(msg: string) {
     title: msg,
     placeHolder: "yes",
     onDidSelectItem: (item) => {
-      // window.showInformationMessage(`Focus ${++i}: ${item}`)
     },
   });
   if (result !== undefined) {
-    // check for string validity
     if (yesStrings.includes(result)) {
-      window.showInformationMessage("returning true");
       return true;
     }
     return false;
