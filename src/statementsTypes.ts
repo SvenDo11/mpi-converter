@@ -1,6 +1,3 @@
-import exp = require("constants");
-import internal = require("stream");
-
 export interface MPI_SendType {
     buf:        string,
     count:      string,

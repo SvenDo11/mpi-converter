@@ -7,11 +7,12 @@ This is the README of the [Visual Studio Code](code.visualstudion.com) extension
 - Can great you.
 - Can tell you current time and date.
 - Can tell you the path to the current 
-- Can 
+- Can replace MPI_Send and MPI_Recv with the nonblocking counterparts
 
 ## Requirements
 
-None.
+Nodejs,
+yo
 
 ## Extension Settings
 
@@ -19,7 +20,7 @@ None.
 
 ## Known Issues
 
-It does not do anything usefull jet. :(
+A lot.
 
 ## Release Notes
 
@@ -27,6 +28,10 @@ It does not do anything usefull jet. :(
 
 Initial project frame.
 Added commands: "Hello World", "What does the clock say?" and "Replace Me" 
+
+### 0.0.2
+
+Added command: "ConvertToUnblocking"
 
 # Notes
 
@@ -42,14 +47,15 @@ Added commands: "Hello World", "What does the clock say?" and "Replace Me"
 6. cancelation of the replacing process 
 7. replace MPI_send with equivalent unblocking
     -> create datatype for storing parameters -> done
-    -> extract parameters from original file
-    -> replace send statement
-    -> add wait statement
+    -> extract parameters from original file -> done
+    -> replace send statement -> done
+    -> add wait statement -> done
 8. replace MPI_recv with equivalent unblocking
     -> create datatype for storing parameters -> done
-    -> extract parameters from original file
-    -> replace send statement
-    -> add wait statement
+    -> extract parameters from original file -> done
+    -> replace send statement -> done
+    -> add wait statement -> done
+9. expand overlap window
 
 ## Future concept
 
