@@ -14,7 +14,7 @@ export function sendToIsend(sendSmt: MPI_SendType, requestName:string): string {
 }
 
 export function recvToIrecv(sendSmt: MPI_RecvType, requestName:string): string {
-    let outstr = "MPI_Isend(";
+    let outstr = "MPI_Irecv(";
     outstr += sendSmt.buf + ", ";
     outstr += sendSmt.count + ", ";
     outstr += sendSmt.datatype + ", ";
