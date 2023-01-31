@@ -11,10 +11,21 @@ This is the README of the [Visual Studio Code](code.visualstudion.com) extension
 
 ## Requirements
 
-Nodejs,
-yo
+- [Visual Studio Code](https://code.visualstudio.com/)
+- [Nodejs](https://nodejs.org/)
+- [Yeoman](https://yeoman.io/)
 
-## Extension Settings
+## Instalation
+
+Make sure you have [Nodejs](https://nodejs.org/) installed on your system.
+Install [Yeoman](https://yeoman.io/) and the Visual Studio Code Api, by running the following comand:
+``` npm install -g yo generator-code ```
+
+Afterwards, run the following command within this repositories folder:
+``` npm install```
+This will install all the required Nodejs packages.
+
+# Extension Settings
 
 None.
 
