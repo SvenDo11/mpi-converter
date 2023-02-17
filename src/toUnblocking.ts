@@ -26,7 +26,7 @@ export class ToUnblocking {
     }
     let searchStrings = ["MPI_Send", "MPI_Recv"];
     for(let i = 0; i < 2; i += 1) {
-      let searchString = searchStrings[i]
+      let searchString = searchStrings[i];
       let codestr = activeEditor.document.getText();
       let lastIndex = 0;
       while (true) {
@@ -51,10 +51,11 @@ export class ToUnblocking {
 
         if (result) {
           window.showInformationMessage("Replacing!");
-          if(i == 0)
+          if(i === 0) {
             await this.replaceSend(index);
-          else
+          } else {
             await this.replaceRecv(index);
+          }
         }
       }
     }
@@ -63,7 +64,7 @@ export class ToUnblocking {
   extractParams(codestr:string, pos:number): string[] {
     let beginParams = codestr.indexOf('(', pos);
     let endParams = codestr.indexOf(')', pos);
-    if(beginParams == -1 || endParams == -1 || beginParams >= endParams) {
+    if(beginParams === -1 || endParams === -1 || beginParams >= endParams) {
       return [];
     }
     let paramstr = codestr.slice(beginParams+1, endParams);
@@ -148,4 +149,23 @@ export class ToUnblocking {
           newLnStr + iSendStr + newLnStr + waitStr);
     });
   }
+}
+
+function extendOverlapWindow(pos: Position, bufferName: string) {
+    let activeEditor = window.activeTextEditor;
+    if (activeEditor === undefined) {
+      return;
+    }
+
+    let currentPos = pos;
+    
+    while(true) {
+      let line = activeEditor.document.lineAt(currentPos);
+      // find the variable.
+      if(line.text.indexOf(bufferName) !== -1) {
+        break;
+      }
+
+      currentPos = currentPos.translate(1);
+    }
 }
