@@ -1,5 +1,6 @@
 import { getVSCodeDownloadUrl } from "@vscode/test-electron/out/util";
 import { CharacterEncoding } from "crypto";
+import { start } from "repl";
 import { setFlagsFromString } from "v8";
 import {
     window,
@@ -140,7 +141,6 @@ export class ToUnblocking {
     let waitStr = "MPI_Wait(&request, &" + recvSmt.status + ");";
 
     let editorPos = activeEditor.document.positionAt(pos);
-    findDomain(editorPos);
     let newLnStr = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
     newLnStr = "\n" + newLnStr;
 
@@ -151,30 +151,57 @@ export class ToUnblocking {
         editBuilder.replace(range, requestStr +
           newLnStr + iSendStr + newLnStr + waitStr);
     });
+
+    let endPos = range.end.translate(1);
+    let waitPos = extendOverlapWindow(endPos, [recvSmt.buf, recvSmt.status]);
+
+    await activeEditor.edit((editBuilder) => {
+      editBuilder.insert(waitPos, newLnStr + waitStr + "\n");
+    });
   }
 }
 
-function extendOverlapWindow(pos: Position, bufferName: string) {
+function extendOverlapWindow(pos: Position, variableNames: Array<string>): Position {
     let activeEditor = window.activeTextEditor;
     if (activeEditor === undefined) {
-      return;
+      return pos;
     }
 
-    let currentPos = pos;
+    let currentPos = pos.translate(1);
 
     // find domain
+    let domain = findDomain(pos);
+    if( domain === undefined)
+      domain = new Range(activeEditor.document.positionAt(0), new Position(activeEditor.document.lineCount - 1, 1));
 
     // look for variables in statments
-    
     while(true) {
-      let line = activeEditor.document.lineAt(currentPos);
-      // find the variable.
-      if(line.text.indexOf(bufferName) !== -1) {
+      if(!domain.contains(currentPos)) break;
+
+      let line = activeEditor.document.lineAt(currentPos).text;
+      // check for variables
+      if (containsVariables(line, variableNames)) {
+        window.showInformationMessage("Found conflict in line " + (currentPos.line+1));
         break;
       }
-
       currentPos = currentPos.translate(1);
     }
+    return new Position(currentPos.line, 0);
+}
+
+function containsVariables(line: string, variableNames: Array<string>): boolean {
+  //line = line.replace(/\s/g, "");
+  line = line.trim();
+  let statments = line.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]/);
+  let found = false;
+  for(let i = 0; i < statments.length; i++) {
+    variableNames.forEach(element => {
+      if(statments[i] === element) {
+        found = true;
+      }
+    });
+  }
+  return found;
 }
 
 function findDomain(pos: Position) {
@@ -215,5 +242,7 @@ function findDomain(pos: Position) {
     }
   }
 
-  window.showInformationMessage("Domain: " + domain);
+  let range = new Range(domain[1], domain[0]);
+
+  return range;
 }
