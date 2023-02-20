@@ -1,3 +1,5 @@
+import { getVSCodeDownloadUrl } from "@vscode/test-electron/out/util";
+import { CharacterEncoding } from "crypto";
 import { setFlagsFromString } from "v8";
 import {
     window,
@@ -138,6 +140,7 @@ export class ToUnblocking {
     let waitStr = "MPI_Wait(&request, &" + recvSmt.status + ");";
 
     let editorPos = activeEditor.document.positionAt(pos);
+    findDomain(editorPos);
     let newLnStr = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
     newLnStr = "\n" + newLnStr;
 
@@ -158,6 +161,10 @@ function extendOverlapWindow(pos: Position, bufferName: string) {
     }
 
     let currentPos = pos;
+
+    // find domain
+
+    // look for variables in statments
     
     while(true) {
       let line = activeEditor.document.lineAt(currentPos);
@@ -168,4 +175,45 @@ function extendOverlapWindow(pos: Position, bufferName: string) {
 
       currentPos = currentPos.translate(1);
     }
+}
+
+function findDomain(pos: Position) {
+  let activeEditor = window.activeTextEditor;
+  if (activeEditor === undefined) {
+    return;
+  }
+
+  let domain = [pos, pos];
+  let offset = [1, -1];
+  let openDomain = ['{', '}'];
+  let closeDomain = ['}', '{'];
+  for(let round = 0; round <= 1; round++) {
+    let subdomaincnt = 0;
+    let currentPos = pos;
+    while(true) {
+      let line = activeEditor.document.lineAt(currentPos).text;
+      let found = false;
+      for( let i = 0; i < line.length; i++) {
+        let c = line.charAt(i);
+        if( c === openDomain[round]) {
+          subdomaincnt++;
+        }
+        if( c === closeDomain[round]) {
+          if(subdomaincnt === 0){
+            domain[round]= new Position(currentPos.line, i);
+            found = true;
+            break;
+          } else {
+            subdomaincnt--;
+          }
+        }
+      }
+      if( found ) {
+        break;
+      }
+      currentPos = currentPos.translate(offset[round]);
+    }
+  }
+
+  window.showInformationMessage("Domain: " + domain);
 }
