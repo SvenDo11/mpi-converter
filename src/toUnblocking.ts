@@ -102,15 +102,22 @@ export class ToUnblocking {
     let waitStr = "MPI_Wait(&request, &status);";
 
     let editorPos = activeEditor.document.positionAt(pos);
-    let newLnStr = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
-    newLnStr = "\n" + newLnStr;
+    let indentation = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
+    let newLnStr = "\n" + indentation;
 
     let endSmt = codestr.indexOf(';', pos);
     let range = new Range(editorPos, activeEditor.document.positionAt(endSmt+1));
 
     await activeEditor.edit((editBuilder) => {
         editBuilder.replace(range, statusStr + newLnStr + requestStr +
-          newLnStr + iSendStr + newLnStr + waitStr);
+          newLnStr + iSendStr);
+    });
+    
+    let endPos = range.end.translate(1);
+    let waitPos = extendOverlapWindow(endPos, [sendSmt.buf]);
+
+    await activeEditor.edit((editBuilder) => {
+      editBuilder.insert(waitPos, indentation + waitStr + "\n");
     });
   }
 
@@ -141,22 +148,22 @@ export class ToUnblocking {
     let waitStr = "MPI_Wait(&request, &" + recvSmt.status + ");";
 
     let editorPos = activeEditor.document.positionAt(pos);
-    let newLnStr = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
-    newLnStr = "\n" + newLnStr;
+    let indentation = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
+    let newLnStr = "\n" + indentation;
 
     let endSmt = codestr.indexOf(';', pos);
     let range = new Range(editorPos, activeEditor.document.positionAt(endSmt+1));
 
     await activeEditor.edit((editBuilder) => {
         editBuilder.replace(range, requestStr +
-          newLnStr + iSendStr + newLnStr + waitStr);
+          newLnStr + iSendStr);
     });
 
     let endPos = range.end.translate(1);
     let waitPos = extendOverlapWindow(endPos, [recvSmt.buf, recvSmt.status]);
 
     await activeEditor.edit((editBuilder) => {
-      editBuilder.insert(waitPos, newLnStr + waitStr + "\n");
+      editBuilder.insert(waitPos, indentation + waitStr + "\n");
     });
   }
 }
@@ -175,18 +182,38 @@ function extendOverlapWindow(pos: Position, variableNames: Array<string>): Posit
       domain = new Range(activeEditor.document.positionAt(0), new Position(activeEditor.document.lineCount - 1, 1));
 
     // look for variables in statments
+    let subdomaincnt = 0;
+    let validPos = currentPos;
     while(true) {
       if(!domain.contains(currentPos)) break;
 
       let line = activeEditor.document.lineAt(currentPos).text;
+
+      if(line.indexOf("{") !== -1) {
+        if(subdomaincnt == 0 && line.trim()[0] == "{") {
+          while(true){
+            let line = activeEditor.document.lineAt(validPos.line);
+            if(line.isEmptyOrWhitespace || line.text.trimEnd().endsWith(";")){
+              validPos = new Position(validPos.line + 1, 0);
+              break;
+            }
+            validPos = validPos.translate(-1);
+          }
+        }
+        subdomaincnt++;
+      }
+      if(line.indexOf("}") !== -1) subdomaincnt--;
+
       // check for variables
       if (containsVariables(line, variableNames)) {
         window.showInformationMessage("Found conflict in line " + (currentPos.line+1));
         break;
       }
+
       currentPos = currentPos.translate(1);
+      if( subdomaincnt == 0) validPos = currentPos;
     }
-    return new Position(currentPos.line, 0);
+    return new Position(validPos.line, 0);
 }
 
 function containsVariables(line: string, variableNames: Array<string>): boolean {
