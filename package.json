@@ -31,7 +31,22 @@
         "command": "mpiconv.convertToUnblocking",
         "title": "Convert MPI statements"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "MPIConverter",
+      "properties": {
+        "mpiconv.confirmationstrings": {
+          "type": "array",
+          "default": ["yes", "ja", "y", "1"],
+          "decription": "Set of strings that can be used as confirmation in the input dialog."
+        },
+        "mpiconv.decliningstrings": {
+          "type": "array",
+          "default": ["no", "nein", "n", "0"],
+          "decription": "Set of strings that can be used as refusal in the input dialog."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
