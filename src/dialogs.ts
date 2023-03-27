@@ -10,7 +10,6 @@ export async function confirmationDialog(msg: string) {
   let yesStrings = conv.get<string[]>('confirmationstrings') || ['yes', 'y'];
   let noStrings = conv.get<string[]>('decliningstrings') || ['no', 'n'];
 
-  console.log(yesStrings)
   let i = 0;
   let result = await window.showQuickPick(["yes", "no"], <QuickPickOptions>{
     title: msg,
