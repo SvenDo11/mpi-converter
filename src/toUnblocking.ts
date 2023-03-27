@@ -13,6 +13,7 @@ import {
 import { confirmationDialog } from "./dialogs";
 import { MPI_SendType, MPI_RecvType} from "./statementsTypes";
 import { sendToIsend, recvToIrecv, containsVariables, findDomain } from "./util";
+import { checkForLoop } from "./forloop";
 
 export class ToUnblocking {
   constructor() {}
@@ -76,7 +77,6 @@ export class ToUnblocking {
   }
 
   async replaceSend(pos: number) {
-    window.showInformationMessage("Got here");
     let activeEditor = window.activeTextEditor;
     if (activeEditor === undefined) {
       return;
@@ -119,6 +119,8 @@ export class ToUnblocking {
     await activeEditor.edit((editBuilder) => {
       editBuilder.insert(waitPos, indentation + waitStr + "\n");
     });
+
+    await checkForLoop(editorPos);
   }
 
   async replaceRecv(pos: number) {
@@ -165,6 +167,8 @@ export class ToUnblocking {
     await activeEditor.edit((editBuilder) => {
       editBuilder.insert(waitPos, indentation + waitStr + "\n");
     });
+
+    await checkForLoop(editorPos);
   }
 }
 
@@ -215,3 +219,4 @@ function extendOverlapWindow(pos: Position, variableNames: Array<string>): Posit
     }
     return new Position(validPos.line, 0);
 }
+        
