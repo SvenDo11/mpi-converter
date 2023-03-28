@@ -8,7 +8,7 @@ export async function checkForLoop(pos: Position)
 {
     let activeEditor = window.activeTextEditor;
     if (activeEditor === undefined) {
-      return;
+      return false;
     }
     let domain = findDomain(pos) || new Range(pos, pos.translate(1));
 
@@ -36,13 +36,9 @@ export async function checkForLoop(pos: Position)
     }
 
     if(isForLoop){
-        await replaceForLoop();
+        if( await confirmationDialog("Is this mpi statement in a for loop, that can be unrolled?") ){
+            return currentPos;
+        }
     }
-}
-
-async function replaceForLoop() {
-    if(!(await confirmationDialog("Is this mpi statement in a for loop, that can be unrolled?")))
-    {
-        return false;
-    }
+    return false;
 }

@@ -10,7 +10,7 @@ import {
     TextEditorRevealType
 } from "vscode";
 
-import { confirmationDialog } from "./dialogs";
+import { confirmationDialog, inputDialog } from "./dialogs";
 import { MPI_SendType, MPI_RecvType} from "./statementsTypes";
 import { sendToIsend, recvToIrecv, containsVariables, findDomain } from "./util";
 import { checkForLoop } from "./forloop";
@@ -96,31 +96,66 @@ export class ToUnblocking {
       comm:   params[5]
     };
 
-    let statusStr = "MPI_Status status;";
-    let requestStr = "MPI_Request request;";
-    let iSendStr = sendToIsend(sendSmt, "request");
-    let waitStr = "MPI_Wait(&request, &status);";
-
     let editorPos = activeEditor.document.positionAt(pos);
+    let isForLoop = await checkForLoop(editorPos);
     let indentation = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
     let newLnStr = "\n" + indentation;
-
     let endSmt = codestr.indexOf(';', pos);
     let range = new Range(editorPos, activeEditor.document.positionAt(endSmt+1));
 
-    await activeEditor.edit((editBuilder) => {
-        editBuilder.replace(range, statusStr + newLnStr + requestStr +
-          newLnStr + iSendStr);
-    });
-    
-    let endPos = range.end.translate(1);
-    let waitPos = extendOverlapWindow(endPos, [sendSmt.buf]);
+    if(!isForLoop){
+      let statusStr = "MPI_Status status;";
+      let requestStr = "MPI_Request request;";
+      let iSendStr = sendToIsend(sendSmt, "request");
+      let waitStr = "MPI_Wait(&request, &status);";
 
-    await activeEditor.edit((editBuilder) => {
-      editBuilder.insert(waitPos, indentation + waitStr + "\n");
-    });
+      let endSmt = codestr.indexOf(';', pos);
+      let range = new Range(editorPos, activeEditor.document.positionAt(endSmt+1));
 
-    await checkForLoop(editorPos);
+      await activeEditor.edit((editBuilder) => {
+          editBuilder.replace(range, statusStr + newLnStr + requestStr +
+            newLnStr + iSendStr);
+      });
+      
+      let endPos = range.end.translate(1);
+      let waitPos = extendOverlapWindow(endPos, [sendSmt.buf]);
+
+      await activeEditor.edit((editBuilder) => {
+        editBuilder.insert(waitPos, indentation + waitStr + "\n");
+      });
+    } else {
+      let cntString = await inputDialog("Enter number of loop iterations:", undefined,
+        "You can enter a specific number, a variable name or a c++ expression to determine the loop iterations. Most of the time the correct statement is written in the for loop parameters.");
+      if( cntString === undefined ) {
+        window.showErrorMessage("Without a valid amount of loop iterations, the loop cannot be correctly unrolled. Please edit the array size manualy!");
+        cntString = "/* MISSING SIZE */";
+      }
+      let statusStr = "MPI_Status status["+cntString+"];";
+      let requestStr = "MPI_Request request["+cntString+"];";
+      let iSendStr = sendToIsend(sendSmt, "request[i]"); // TODO: change static i to actual iterator
+      let waitStr = "MPI_Wait(&request[i], &status[i]);";
+
+      await activeEditor.edit((editBuilder) => {
+          editBuilder.replace(range, iSendStr);
+      });
+
+      let prefixPos = (isForLoop instanceof Position) ? isForLoop : editorPos;
+      let loopStr = activeEditor.document.lineAt(prefixPos).text;
+      let indentation = activeEditor.document.lineAt(prefixPos).text.slice(0, prefixPos.character);
+      let newLnStr = "\n" + indentation;
+      
+      await activeEditor.edit((editBuilder) => {
+          editBuilder.insert(prefixPos, statusStr + newLnStr + requestStr + newLnStr);
+      });
+      
+      let endPos = findDomain(editorPos.translate(2))?.end?.translate(1);
+      console.log("EndPos = "+endPos);
+      let waitPos = extendOverlapWindow(endPos?endPos:editorPos, [sendSmt.buf]);
+
+      await activeEditor.edit((editBuilder) => {
+        editBuilder.insert(waitPos, loopStr + newLnStr + "{" + newLnStr + "	" + waitStr + newLnStr + "}\n");
+      });
+    }
   }
 
   async replaceRecv(pos: number) {
@@ -145,11 +180,16 @@ export class ToUnblocking {
       status: params[6].replace('&', '').trim()
     };
 
+    let editorPos = activeEditor.document.positionAt(pos);
+    let isForLoop = await checkForLoop(editorPos);
+    if(isForLoop){
+      console.log("Works");
+    }
+
     let requestStr = "MPI_Request request;";
     let iSendStr = recvToIrecv(recvSmt, "request");
     let waitStr = "MPI_Wait(&request, &" + recvSmt.status + ");";
 
-    let editorPos = activeEditor.document.positionAt(pos);
     let indentation = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
     let newLnStr = "\n" + indentation;
 
@@ -168,7 +208,6 @@ export class ToUnblocking {
       editBuilder.insert(waitPos, indentation + waitStr + "\n");
     });
 
-    await checkForLoop(editorPos);
   }
 }
 
