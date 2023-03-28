@@ -1,6 +1,7 @@
-import { TextLine, Position, Range, window } from "vscode";
+import { ViewColumn, Position, Range, window } from "vscode";
 import { confirmationDialog } from "./dialogs";
-import { containsVariables, findDomain } from './util';
+import { containsVariables, findDomain } from './util'; 
+import { getForLoopHTML } from "./webviews";
 
 const separators = [';', '}'];
 
@@ -21,7 +22,18 @@ export async function checkForLoop(pos: Position)
             continue;
         }
         if(containsVariables(line.text, ['for'])){
-            window.showInformationMessage("found this to be in a for loop");
+            window.showInformationMessage("found this to be in a for loop", "What does this mean?").then(
+                selection => {
+                    const panel = window.createWebviewPanel(
+                        'forLoop',
+                        'For Loop',
+                        ViewColumn.Beside,
+                        {}
+                    );
+
+                    panel.webview.html = getForLoopHTML();
+                }
+            );
             isForLoop = true;
             break;
         }

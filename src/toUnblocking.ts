@@ -249,7 +249,6 @@ function extendOverlapWindow(pos: Position, variableNames: Array<string>): Posit
 
       // check for variables
       if (containsVariables(line, variableNames)) {
-        window.showInformationMessage("Found conflict in line " + (currentPos.line+1));
         break;
       }
 
