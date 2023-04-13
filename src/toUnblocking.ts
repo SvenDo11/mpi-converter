@@ -1,7 +1,4 @@
 import { getVSCodeDownloadUrl } from "@vscode/test-electron/out/util";
-import { CharacterEncoding } from "crypto";
-import { start } from "repl";
-import { setFlagsFromString } from "v8";
 import {
     window,
     Position,
@@ -12,80 +9,138 @@ import {
 
 import { confirmationDialog, inputDialog } from "./dialogs";
 import { MPI_SendType, MPI_RecvType} from "./statementsTypes";
-import { sendToIsend, recvToIrecv, containsVariables, findDomain } from "./util";
+import { sendToIsend, recvToIrecv, containsVariables, findDomain , extendOverlapWindow, extractParams} from "./util";
 import { checkForLoop } from "./forloop";
 
-export class ToUnblocking {
-  constructor() {}
+abstract class BlockingToUnblocking<MPI_Type>{
+  codestr: string = "";
+  isLoop: boolean = false;
 
-  async main(){
-    await this.unblockingDialog();
-    window.showInformationMessage("Done");
-  }
+  blockingInst: MPI_Type | undefined;
+  loopStr: string = "";
+  loopCntStr = "N";
+  loopIterator: string = "";
 
-  async unblockingDialog() {
+  constructor(public pos:number) {}
+
+  abstract getInstruction(): MPI_Type;
+
+  abstract getPrefixStr(): Promise<string>;
+  abstract getSuffixStr(): string;
+  abstract transformToUnblocking(): string;
+
+  abstract getConflictVariableStr(): string[];
+
+  async replace() {
     let activeEditor = window.activeTextEditor;
     if (activeEditor === undefined) {
       return;
     }
-    let searchStrings = ["MPI_Send", "MPI_Recv"];
-    for(let i = 0; i < 2; i += 1) {
-      let searchString = searchStrings[i];
-      let codestr = activeEditor.document.getText();
-      let lastIndex = 0;
-      while (true) {
-        let index = codestr.indexOf(searchString, lastIndex);
-        if (index === -1) {
-          break;
-        }
+    this.codestr = activeEditor.document.getText();
+    this.blockingInst = this.getInstruction();
 
-        let position = activeEditor.document.positionAt(index);
-        lastIndex = index + 1;
+    let editorPos = activeEditor.document.positionAt(this.pos);
 
-        let rep = new Range(
-          position,
-          new Position(position.line, position.character + searchString.length)
-        );
-        // Highlighting and revealing
-        activeEditor.selection = new Selection(rep.start, rep.end);
-        activeEditor.revealRange(rep, TextEditorRevealType.InCenter);
-        let result = await confirmationDialog(
-          "Turn this statement into an unblocking one?"
-        );
+    let isForLoop = await checkForLoop(editorPos);
+    this.isLoop = isForLoop instanceof Position;
+    if(this.isLoop){
+      this.loopStr = activeEditor.document.lineAt(isForLoop as Position).text;
+      this.loopCntStr = await this.getLoopIterationCount();
+      this.loopIterator = await this.getLoopIterator();
+    }
 
-        if (result) {
-          window.showInformationMessage("Replacing!");
-          if(i === 0) {
-            await this.replaceSend(index);
-          } else {
-            await this.replaceRecv(index);
-          }
-        }
-      }
+    let indentation = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
+    let newLnStr = "\n" + indentation;
+    let endSmt = this.codestr.indexOf(';', this.pos);
+    let range = new Range(editorPos, activeEditor.document.positionAt(endSmt+1));
+
+    let prefixStr = await this.getPrefixStr();
+    let unblockingStr = this.transformToUnblocking();
+    let suffixStr = this.getSuffixStr();
+
+    if(!this.isLoop){
+      let endSmt = this.codestr.indexOf(';', this.pos);
+      let range = new Range(editorPos, activeEditor.document.positionAt(endSmt+1));
+
+      await activeEditor.edit((editBuilder) => {
+          editBuilder.replace(range, prefixStr +
+            newLnStr + unblockingStr);
+      });
+      
+      let endPos = range.end.translate(1);
+      let waitPos = extendOverlapWindow(endPos, this.getConflictVariableStr());
+
+      await activeEditor.edit((editBuilder) => {
+        editBuilder.insert(waitPos, indentation + suffixStr + "\n");
+      });
+    } else {
+      await activeEditor.edit((editBuilder) => {
+          editBuilder.replace(range, unblockingStr);
+      });
+
+      let prefixPos = (isForLoop instanceof Position) ? isForLoop : editorPos;
+      let indentation = activeEditor.document.lineAt(prefixPos).text.slice(0, prefixPos.character);
+      let newLnStr = "\n" + indentation;
+      
+      await activeEditor.edit((editBuilder) => {
+          editBuilder.insert(prefixPos, prefixStr + newLnStr);
+      });
+      
+      let endPos = findDomain(editorPos.translate(2))?.end?.translate(1);
+      let waitPos = extendOverlapWindow(endPos?endPos:editorPos, this.getConflictVariableStr());
+
+      await activeEditor.edit((editBuilder) => {
+        editBuilder.insert(waitPos, suffixStr);
+      });
     }
   }
 
-  extractParams(codestr:string, pos:number): string[] {
-    let beginParams = codestr.indexOf('(', pos);
-    let endParams = codestr.indexOf(')', pos);
-    if(beginParams === -1 || endParams === -1 || beginParams >= endParams) {
-      return [];
+  async getLoopIterationCount(): Promise<string> {
+    let loopParams = extractParams(this.loopStr, 0, ';');
+    if(loopParams.length != 3){
+      return '';
     }
-    let paramstr = codestr.slice(beginParams+1, endParams);
-    let params = paramstr.split(',');
-    return params;
+    let comp = loopParams[1].split(/<|>|==|!=|<=|>=|<=>/);
+    if(comp.length != 2) {
+      return '';
+    }
+    let lhs = loopParams[0].split('=')[0].split(' ');
+    let iterator = lhs.length == 1 ? lhs[0] : lhs[1];
+    let cntPreview = containsVariables(comp[0], [iterator]) ? comp[1] : comp[0];
+
+    let cntString = await inputDialog("Enter number of loop iterations:", cntPreview,
+      "You can enter a specific number, a variable name or a c++ expression to determine the loop iterations. Most of the time the correct statement is written in the for loop parameters.");
+    if( cntString === undefined ) {
+      window.showErrorMessage("Without a valid amount of loop iterations, the loop cannot be correctly unrolled. Please edit the array size manualy!");
+      cntString = "/* MISSING SIZE */";
+    }
+    return cntString;
   }
 
-  async replaceSend(pos: number) {
-    let activeEditor = window.activeTextEditor;
-    if (activeEditor === undefined) {
-      return;
+  async getLoopIterator(): Promise<string> {
+    let loopParams = extractParams(this.loopStr, 0, ';');
+    if(loopParams.length != 3){
+      return '';
     }
-    let codestr = activeEditor.document.getText();
-    let params = this.extractParams(codestr, pos);
+    let lhs = loopParams[0].split('=')[0].split(' ');
+    let iteratorpreview = lhs.length == 1 ? lhs[0] : lhs[1];
+
+    let iteratorString = await inputDialog("Enter loop iterator:", iteratorpreview,
+                              "You need to provide a iterator for the request and status variables of the MPI unblocking operation. In most cases this is the for loop iterator.");
+    if( iteratorString === undefined ) {
+      window.showErrorMessage("Without a valid loop iterator, the loop cannot correctly execute the MPI statements. Please edit the iterator manualy!");
+      iteratorString = "/* MISSING SIZE */";
+    }
+    return iteratorString;
+  }
+}
+
+class SendConverter extends BlockingToUnblocking<MPI_SendType> {
+  getInstruction(): MPI_SendType {
+    let params = extractParams(this.codestr, this.pos);
 
     if(params.length !== 6) {
-      return;
+      throw new Error("Did not get the appropriate amount of parameters from function. Expected 6 but got " + params.length + "!");
     }
     let sendSmt: MPI_SendType = {
       buf:    params[0],
@@ -95,80 +150,50 @@ export class ToUnblocking {
       tag:    params[4],
       comm:   params[5]
     };
-
-    let editorPos = activeEditor.document.positionAt(pos);
-    let isForLoop = await checkForLoop(editorPos);
-    let indentation = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
-    let newLnStr = "\n" + indentation;
-    let endSmt = codestr.indexOf(';', pos);
-    let range = new Range(editorPos, activeEditor.document.positionAt(endSmt+1));
-
-    if(!isForLoop){
-      let statusStr = "MPI_Status status;";
-      let requestStr = "MPI_Request request;";
-      let iSendStr = sendToIsend(sendSmt, "request");
-      let waitStr = "MPI_Wait(&request, &status);";
-
-      let endSmt = codestr.indexOf(';', pos);
-      let range = new Range(editorPos, activeEditor.document.positionAt(endSmt+1));
-
-      await activeEditor.edit((editBuilder) => {
-          editBuilder.replace(range, statusStr + newLnStr + requestStr +
-            newLnStr + iSendStr);
-      });
-      
-      let endPos = range.end.translate(1);
-      let waitPos = extendOverlapWindow(endPos, [sendSmt.buf]);
-
-      await activeEditor.edit((editBuilder) => {
-        editBuilder.insert(waitPos, indentation + waitStr + "\n");
-      });
-    } else {
-      let cntString = await inputDialog("Enter number of loop iterations:", undefined,
-        "You can enter a specific number, a variable name or a c++ expression to determine the loop iterations. Most of the time the correct statement is written in the for loop parameters.");
-      if( cntString === undefined ) {
-        window.showErrorMessage("Without a valid amount of loop iterations, the loop cannot be correctly unrolled. Please edit the array size manualy!");
-        cntString = "/* MISSING SIZE */";
-      }
-      let statusStr = "MPI_Status status["+cntString+"];";
-      let requestStr = "MPI_Request request["+cntString+"];";
-      let iSendStr = sendToIsend(sendSmt, "request[i]"); // TODO: change static i to actual iterator
-      let waitStr = "MPI_Wait(&request[i], &status[i]);";
-
-      await activeEditor.edit((editBuilder) => {
-          editBuilder.replace(range, iSendStr);
-      });
-
-      let prefixPos = (isForLoop instanceof Position) ? isForLoop : editorPos;
-      let loopStr = activeEditor.document.lineAt(prefixPos).text;
-      let indentation = activeEditor.document.lineAt(prefixPos).text.slice(0, prefixPos.character);
-      let newLnStr = "\n" + indentation;
-      
-      await activeEditor.edit((editBuilder) => {
-          editBuilder.insert(prefixPos, statusStr + newLnStr + requestStr + newLnStr);
-      });
-      
-      let endPos = findDomain(editorPos.translate(2))?.end?.translate(1);
-      console.log("EndPos = "+endPos);
-      let waitPos = extendOverlapWindow(endPos?endPos:editorPos, [sendSmt.buf]);
-
-      await activeEditor.edit((editBuilder) => {
-        editBuilder.insert(waitPos, loopStr + newLnStr + "{" + newLnStr + "	" + waitStr + newLnStr + "}\n");
-      });
-    }
+    return sendSmt;
   }
 
-  async replaceRecv(pos: number) {
-    let activeEditor = window.activeTextEditor;
-    if (activeEditor === undefined) {
-      return;
+  async getPrefixStr(): Promise<string> {
+    // TODO: get status and request variable names.
+    let statusStr = "MPI_Status status;";
+    let requestStr = "MPI_Request request;";
+    if(this.isLoop) {
+      // TODO: get the righthandside of the loop iterations
+      statusStr = "MPI_Status status["+ this.loopCntStr +"];";
+      requestStr = "MPI_Request request["+ this.loopCntStr +"];";
     }
+    return statusStr + "\n" + requestStr;
+  }
 
-    let codestr = activeEditor.document.getText();
-    let params = this.extractParams(codestr, pos);
+  getSuffixStr(): string {
+    let waitStr = "MPI_Wait(&request, &status);";
+    if(this.isLoop){
+      waitStr = "MPI_Waitall(" + this.loopCntStr + ", request, status);";
+    }
+    return waitStr;
+  }
+  
+  transformToUnblocking(): string {
+    if(this.blockingInst === undefined) {
+      throw new Error("Blocking instruciton not set!");
+    }
+    return sendToIsend(this.blockingInst, this.isLoop ? "request[" + this.loopIterator + "]" : "request");
+  }
+
+  getConflictVariableStr(): string[] {
+    if(this.blockingInst === undefined) {
+      throw new Error("Blocking instruciton not set!");
+    }
+    return [this.blockingInst.buf];
+  }
+}
+
+class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
+  getInstruction(): MPI_RecvType {
+    let params = extractParams(this.codestr, this.pos);
 
     if(params.length !== 7) {
-      return;
+      throw new Error("Did not get the appropriate amount of parameters from function. Expected 7 but got " + params.length + "!");
     }
     let recvSmt: MPI_RecvType = {
       buf:    params[0],
@@ -179,82 +204,81 @@ export class ToUnblocking {
       comm:   params[5],
       status: params[6].replace('&', '').trim()
     };
-
-    let editorPos = activeEditor.document.positionAt(pos);
-    let isForLoop = await checkForLoop(editorPos);
-    if(isForLoop){
-      console.log("Works");
-    }
-
-    let requestStr = "MPI_Request request;";
-    let iSendStr = recvToIrecv(recvSmt, "request");
-    let waitStr = "MPI_Wait(&request, &" + recvSmt.status + ");";
-
-    let indentation = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
-    let newLnStr = "\n" + indentation;
-
-    let endSmt = codestr.indexOf(';', pos);
-    let range = new Range(editorPos, activeEditor.document.positionAt(endSmt+1));
-
-    await activeEditor.edit((editBuilder) => {
-        editBuilder.replace(range, requestStr +
-          newLnStr + iSendStr);
-    });
-
-    let endPos = range.end.translate(1);
-    let waitPos = extendOverlapWindow(endPos, [recvSmt.buf, recvSmt.status]);
-
-    await activeEditor.edit((editBuilder) => {
-      editBuilder.insert(waitPos, indentation + waitStr + "\n");
-    });
-
+    return recvSmt;
   }
+
+  async getPrefixStr(): Promise<string> {
+    let requestStr = "MPI_Request request;";
+    if(this.isLoop) {
+      //TODO: get the righthandside of the loop iterations
+      this.loopCntStr = await this.getLoopIterationCount();
+      requestStr = "MPI_Request request[" + this.loopCntStr + "];";
+    }
+    return requestStr;
+  }
+  getSuffixStr(): string {
+    let waitStr = "MPI_Wait(&request, &"+ this.blockingInst?.status +");";
+    if(this.isLoop){
+      waitStr = "MPI_Waitall(" + this.loopCntStr + ", request, " + this.blockingInst?.status +");";
+    }
+    return waitStr;
+  }
+  transformToUnblocking(): string {
+    if(this.blockingInst === undefined) {
+      throw new Error("Blocking instruction not set!");
+    }
+    return recvToIrecv(this.blockingInst, this.isLoop ? "request[i]" : 
+                      "request");
+  }
+
+  getConflictVariableStr(): string[] {
+    if(this.blockingInst === undefined) {
+      throw new Error("Blocking instruciton not set!");
+    }
+    return [this.blockingInst.buf, this.blockingInst.status];
+  }  
 }
 
-function extendOverlapWindow(pos: Position, variableNames: Array<string>): Position {
-    let activeEditor = window.activeTextEditor;
-    if (activeEditor === undefined) {
-      return pos;
-    }
-
-    let currentPos = pos.translate(1);
-
-    // find domain
-    let domain = findDomain(pos);
-    if( domain === undefined)
-      domain = new Range(activeEditor.document.positionAt(0), new Position(activeEditor.document.lineCount - 1, 1));
-
-    // look for variables in statments
-    let subdomaincnt = 0;
-    let validPos = currentPos;
-    while(true) {
-      if(!domain.contains(currentPos)) break;
-
-      let line = activeEditor.document.lineAt(currentPos).text;
-
-      if(line.indexOf("{") !== -1) {
-        if(subdomaincnt == 0 && line.trim()[0] == "{") {
-          while(true){
-            let line = activeEditor.document.lineAt(validPos.line);
-            if(line.isEmptyOrWhitespace || line.text.trimEnd().endsWith(";")){
-              validPos = new Position(validPos.line + 1, 0);
-              break;
-            }
-            validPos = validPos.translate(-1);
-          }
-        }
-        subdomaincnt++;
-      }
-      if(line.indexOf("}") !== -1) subdomaincnt--;
-
-      // check for variables
-      if (containsVariables(line, variableNames)) {
+export async function blockingToUnblockingMain() {
+  let activeEditor = window.activeTextEditor;
+  if (activeEditor === undefined) {
+    return;
+  }
+  let searchStrings = ["MPI_Send", "MPI_Recv"];
+  for(let i = 0; i < 2; i += 1) {
+    let searchString = searchStrings[i];
+    let codestr = activeEditor.document.getText();
+    let lastIndex = 0;
+    while (true) {
+      let index = codestr.indexOf(searchString, lastIndex);
+      if (index === -1) {
         break;
       }
 
-      currentPos = currentPos.translate(1);
-      if( subdomaincnt == 0) validPos = currentPos;
+      let position = activeEditor.document.positionAt(index);
+      lastIndex = index + 1;
+
+      let rep = new Range(
+        position,
+        new Position(position.line, position.character + searchString.length)
+      );
+      // Highlighting and revealing
+      activeEditor.selection = new Selection(rep.start, rep.end);
+      activeEditor.revealRange(rep, TextEditorRevealType.InCenter);
+      let result = await confirmationDialog(
+        "Turn this statement into an unblocking one?"
+      );
+
+      if (result) {
+        window.showInformationMessage("Replacing!");
+        if(i === 0) {
+          let replacer = new SendConverter(index);
+          await replacer.replace();
+        } else {
+          let replacer = new RecvConverter(index);
+          await replacer.replace();
+        }
+      }
     }
-    return new Position(validPos.line, 0);
+  }
 }
-        

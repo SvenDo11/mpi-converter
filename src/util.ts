@@ -85,3 +85,61 @@ export function findDomain(pos: Position) {
 
   return range;
 }
+
+export function extractParams(codestr:string, pos:number, splitChar: string = ','): string[] {
+  let beginParams = codestr.indexOf('(', pos);
+  let endParams = codestr.indexOf(')', pos);
+  if(beginParams === -1 || endParams === -1 || beginParams >= endParams) {
+    return [];
+  }
+  let paramstr = codestr.slice(beginParams+1, endParams);
+  let params = paramstr.split(splitChar);
+  return params;
+}
+
+export function extendOverlapWindow(pos: Position, variableNames: Array<string>): Position {
+    let activeEditor = window.activeTextEditor;
+    if (activeEditor === undefined) {
+      return pos;
+    }
+
+    let currentPos = pos.translate(1);
+
+    // find domain
+    let domain = findDomain(pos);
+    if( domain === undefined)
+      domain = new Range(activeEditor.document.positionAt(0), new Position(activeEditor.document.lineCount - 1, 1));
+
+    // look for variables in statments
+    let subdomaincnt = 0;
+    let validPos = currentPos;
+    while(true) {
+      if(!domain.contains(currentPos)) break;
+
+      let line = activeEditor.document.lineAt(currentPos).text;
+
+      if(line.indexOf("{") !== -1) {
+        if(subdomaincnt == 0 && line.trim()[0] == "{") {
+          while(true){
+            let line = activeEditor.document.lineAt(validPos.line);
+            if(line.isEmptyOrWhitespace || line.text.trimEnd().endsWith(";")){
+              validPos = new Position(validPos.line + 1, 0);
+              break;
+            }
+            validPos = validPos.translate(-1);
+          }
+        }
+        subdomaincnt++;
+      }
+      if(line.indexOf("}") !== -1) subdomaincnt--;
+
+      // check for variables
+      if (containsVariables(line, variableNames)) {
+        break;
+      }
+
+      currentPos = currentPos.translate(1);
+      if( subdomaincnt == 0) validPos = currentPos;
+    }
+    return new Position(validPos.line, 0);
+}
