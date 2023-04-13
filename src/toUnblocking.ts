@@ -247,9 +247,9 @@ export async function blockingToUnblockingMain() {
   let searchStrings = ["MPI_Send", "MPI_Recv"];
   for(let i = 0; i < 2; i += 1) {
     let searchString = searchStrings[i];
-    let codestr = activeEditor.document.getText();
     let lastIndex = 0;
     while (true) {
+      let codestr = activeEditor.document.getText();
       let index = codestr.indexOf(searchString, lastIndex);
       if (index === -1) {
         break;
@@ -270,7 +270,6 @@ export async function blockingToUnblockingMain() {
       );
 
       if (result) {
-        window.showInformationMessage("Replacing!");
         if(i === 0) {
           let replacer = new SendConverter(index);
           await replacer.replace();

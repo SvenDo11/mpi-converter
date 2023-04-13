@@ -22,7 +22,7 @@ export async function checkForLoop(pos: Position)
             continue;
         }
         if(containsVariables(line.text, ['for'])){
-            window.showInformationMessage("found this to be in a for loop", "What does this mean?").then(
+            /*window.showInformationMessage("found this to be in a for loop", "What does this mean?").then(
                 selection => {
                     const panel = window.createWebviewPanel(
                         'forLoop',
@@ -33,7 +33,7 @@ export async function checkForLoop(pos: Position)
 
                     panel.webview.html = getForLoopHTML();
                 }
-            );
+            );*/
             isForLoop = true;
             break;
         }
