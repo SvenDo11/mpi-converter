@@ -1,6 +1,7 @@
 import { MPI_SendType, MPI_RecvType } from "./statementsTypes";
 
-import {window, Position, Range} from 'vscode';
+import {window, Position, Range, TextEditor} from 'vscode';
+import { BroadcastChannel } from "worker_threads";
 
 export function sendToIsend(sendSmt: MPI_SendType, requestName:string): string {
     let outstr = "MPI_Isend(";
@@ -87,13 +88,65 @@ export function findDomain(pos: Position) {
 }
 
 export function extractParams(codestr:string, pos:number, splitChar: string = ','): string[] {
-  let beginParams = codestr.indexOf('(', pos);
-  let endParams = codestr.indexOf(')', pos);
+
+  let beginParams = -1;
+  let endParams = -1;
+  let currentPos = pos;
+  let subdomaincnt = 0;
+  let mode = 0;
+  while(true) {
+    let char = codestr.charAt(currentPos);
+    switch(mode) {
+      case 0:
+        // Find first open parenthesis
+        if(char === '(') {
+          beginParams = currentPos;
+          mode = 1;
+        }
+        break;
+      case 1:
+        if(char === ')') {
+          endParams = currentPos;
+          mode = 3;
+        }
+        if(char === '(') {
+          subdomaincnt = 1;
+          mode = 2;
+        }
+        break;
+      case 2:
+        if(char === ')') {
+          subdomaincnt -= 1;
+          if(subdomaincnt === 0) {
+            mode = 1;
+          }
+        }
+        if(char === '(') {
+          subdomaincnt += 1;
+        }
+        break;
+      default:
+        mode = 0;
+        break;
+    }
+    if(mode === 3){
+      break;
+    }
+    currentPos += 1;
+    if(currentPos >= codestr.length){
+      break;
+    }
+  }
+  
   if(beginParams === -1 || endParams === -1 || beginParams >= endParams) {
     return [];
   }
   let paramstr = codestr.slice(beginParams+1, endParams);
   let params = paramstr.split(splitChar);
+
+  for( let i = 0; i < params.length; i += 1) {
+    params[i] = params[i].trim();
+  }
   return params;
 }
 
