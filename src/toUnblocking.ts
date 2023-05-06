@@ -97,17 +97,15 @@ abstract class BlockingToUnblocking<MPI_Type>{
 
   async getLoopIterationCount(): Promise<string> {
     let loopParams = extractParams(this.loopStr, 0, ';');
-    if(loopParams.length != 3){
-      return '';
+    let cntPreview = "";
+    if(loopParams.length === 3){
+      let comp = loopParams[1].split(/<|>|==|!=|<=|>=|<=>/);
+      if(comp.length === 2) {
+        let lhs = loopParams[0].split('=')[0].split(' ');
+        let iterator = lhs.length == 1 ? lhs[0] : lhs[1];
+        cntPreview = containsVariables(comp[0], [iterator]) ? comp[1] : comp[0];
+      }
     }
-    let comp = loopParams[1].split(/<|>|==|!=|<=|>=|<=>/);
-    if(comp.length != 2) {
-      return '';
-    }
-    let lhs = loopParams[0].split('=')[0].split(' ');
-    let iterator = lhs.length == 1 ? lhs[0] : lhs[1];
-    let cntPreview = containsVariables(comp[0], [iterator]) ? comp[1] : comp[0];
-
     let cntString = await inputDialog("Enter number of loop iterations:", cntPreview,
       "You can enter a specific number, a variable name or a c++ expression to determine the loop iterations. Most of the time the correct statement is written in the for loop parameters.");
     if( cntString === undefined ) {
@@ -119,11 +117,11 @@ abstract class BlockingToUnblocking<MPI_Type>{
 
   async getLoopIterator(): Promise<string> {
     let loopParams = extractParams(this.loopStr, 0, ';');
-    if(loopParams.length != 3){
-      return '';
+    let iteratorpreview = "";
+    if(loopParams.length === 3){
+      let lhs = loopParams[0].split('=')[0].split(' ');
+      iteratorpreview = lhs.length == 1 ? lhs[0] : lhs[1];
     }
-    let lhs = loopParams[0].split('=')[0].split(' ');
-    let iteratorpreview = lhs.length == 1 ? lhs[0] : lhs[1];
 
     let iteratorString = await inputDialog("Enter loop iterator:", iteratorpreview,
                               "You need to provide a iterator for the request and status variables of the MPI unblocking operation. In most cases this is the for loop iterator.");
