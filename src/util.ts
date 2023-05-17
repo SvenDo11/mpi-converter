@@ -1,6 +1,6 @@
 import { MPI_SendType, MPI_RecvType } from "./statementsTypes";
 
-import {window, Position, Range, TextEditor} from 'vscode';
+import {window, Position, Range, TextEditor, ProcessExecutionOptions} from 'vscode';
 import { BroadcastChannel } from "worker_threads";
 
 export function sendToIsend(sendSmt: MPI_SendType, requestName:string): string {
@@ -195,4 +195,62 @@ export function extendOverlapWindow(pos: Position, variableNames: Array<string>)
       if( subdomaincnt == 0) validPos = currentPos;
     }
     return new Position(validPos.line, 0);
+}
+
+interface functionConflict {
+  name: String,
+  location: Range, 
+}
+
+// TODO: Fix \t tabs as possible letters, maybe by trimming
+// TODO: Fix function in subdomain error
+export function containsFunctionCalls(range: Range): functionConflict[] {
+    let activeEditor = window.activeTextEditor;
+    if (activeEditor === undefined) {
+      return [];
+    }
+
+    let currentPos = range.start;
+    let conflictFunctions: functionConflict[] = [];
+    while(true){
+      let line = activeEditor.document.lineAt(currentPos);
+      if(!line.isEmptyOrWhitespace) {
+        let lineTxt = line.text;
+        let bracketPos = 0;
+        while(true) {
+          bracketPos = lineTxt.indexOf("(", bracketPos+1);
+          if(bracketPos === -1) {
+            break;
+          }
+          let charPos = bracketPos-1;
+          while(true) {
+            if(lineTxt.charAt(charPos) !== " " || charPos === 0){
+              break;
+            }
+            charPos -= 1;
+          }
+          if(lineTxt.charAt(charPos).match(/\w/) !== null) {
+            // Found a function
+            let startCharPos =  charPos-1;
+            while(true) {
+              if(lineTxt.charAt(startCharPos).match(/\w/) !== null && startCharPos > 0){
+                startCharPos -= 1;
+              }
+              else {
+                break;
+              }
+            }
+            conflictFunctions.push({name: lineTxt.substring(startCharPos+1, charPos+1),
+                                    location: new Range(new Position(currentPos.line, startCharPos+1),
+                                                        new Position(currentPos.line, charPos+1))});
+          }
+        } 
+      }
+      if(currentPos.line === range.end.line) {
+        break;
+      } 
+      currentPos = currentPos.translate(1);
+    }
+
+    return conflictFunctions;
 }

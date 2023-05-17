@@ -44,6 +44,11 @@
           "type": "array",
           "default": ["no", "nein", "n", "0"],
           "decription": "Set of strings that can be used as refusal in the input dialog."
+        },
+        "showFunctionDataRaceWarning": {
+          "type":"boolean",
+          "default": "true",
+          "description": "Show an error message, whenever an potential datarace can be within some sub domain."
         }
       }
     }

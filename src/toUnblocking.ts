@@ -9,7 +9,7 @@ import {
 
 import { confirmationDialog, inputDialog } from "./dialogs";
 import { MPI_SendType, MPI_RecvType} from "./statementsTypes";
-import { sendToIsend, recvToIrecv, containsVariables, findDomain , extendOverlapWindow, extractParams} from "./util";
+import { sendToIsend, recvToIrecv, containsVariables, findDomain , extendOverlapWindow, extractParams, containsFunctionCalls} from "./util";
 import { checkForLoop } from "./forloop";
 
 abstract class BlockingToUnblocking<MPI_Type>{
@@ -69,6 +69,7 @@ abstract class BlockingToUnblocking<MPI_Type>{
       
       let endPos = range.end.translate(1);
       let waitPos = extendOverlapWindow(endPos, this.getConflictVariableStr());
+      waitPos = await this.checkForFunctionConflict(new Range(endPos?endPos:editorPos, waitPos));
 
       await activeEditor.edit((editBuilder) => {
         editBuilder.insert(waitPos, indentation + suffixStr + "\n");
@@ -88,11 +89,25 @@ abstract class BlockingToUnblocking<MPI_Type>{
       
       let endPos = findDomain(editorPos.translate(2))?.end?.translate(1);
       let waitPos = extendOverlapWindow(endPos?endPos:editorPos, this.getConflictVariableStr());
-
+      waitPos = await this.checkForFunctionConflict(new Range(endPos?endPos:editorPos, waitPos));
       await activeEditor.edit((editBuilder) => {
         editBuilder.insert(waitPos, suffixStr);
       });
     }
+  }
+
+  async checkForFunctionConflict(range: Range){
+      let functions = containsFunctionCalls(range);
+      let waitPos = range.end;
+      for(let i = 0; i < functions.length; i += 1) {
+        // TODO: get a better message here!
+        let result = await confirmationDialog("Does function '" + functions[i].name + "' have a datarace with the buffer variable?")
+        if( result ) {
+          waitPos = functions[i].location.start;
+          break;
+        }
+      }
+      return waitPos;
   }
 
   async getLoopIterationCount(): Promise<string> {
