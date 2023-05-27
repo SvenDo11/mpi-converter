@@ -200,6 +200,7 @@ export function extendOverlapWindow(pos: Position, variableNames: Array<string>)
 interface functionConflict {
   name: String,
   location: Range, 
+  subdomainPos?: Position
 }
 
 // TODO: Fix \t tabs as possible letters, maybe by trimming
@@ -211,12 +212,15 @@ export function containsFunctionCalls(range: Range): functionConflict[] {
     }
 
     let currentPos = range.start;
+    let lastvalidPos = currentPos;
+    let subdomain = 0;
     let conflictFunctions: functionConflict[] = [];
     while(true){
       let line = activeEditor.document.lineAt(currentPos);
       if(!line.isEmptyOrWhitespace) {
         let lineTxt = line.text;
         let bracketPos = 0;
+        subdomain += subDomainChangeInLine(lineTxt);
         while(true) {
           bracketPos = lineTxt.indexOf("(", bracketPos+1);
           if(bracketPos === -1) {
@@ -242,7 +246,8 @@ export function containsFunctionCalls(range: Range): functionConflict[] {
             }
             conflictFunctions.push({name: lineTxt.substring(startCharPos+1, charPos+1),
                                     location: new Range(new Position(currentPos.line, startCharPos+1),
-                                                        new Position(currentPos.line, charPos+1))});
+                                                        new Position(currentPos.line, charPos+1)),
+                                    subdomainPos: (subdomain === 0) ? undefined : lastvalidPos});
           }
         } 
       }
@@ -250,7 +255,31 @@ export function containsFunctionCalls(range: Range): functionConflict[] {
         break;
       } 
       currentPos = currentPos.translate(1);
+      if(subdomain === 0) {
+        lastvalidPos = currentPos;
+      }
     }
 
     return conflictFunctions;
+}
+
+export function subDomainChangeInLine(line: string): number {
+  let dif = 0;
+  let id = 0;
+  while(id !== -1){
+    id = line.indexOf('{', id);
+    if(id !== -1){
+      dif += 1;
+      id += 1;
+    } 
+  }
+  id = 0;
+  while(id !== -1){
+    id = line.indexOf('}', id);
+    if(id !== -1){
+      dif -= 1;
+      id += 1;
+    } 
+  }
+  return dif;
 }
