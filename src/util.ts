@@ -160,9 +160,9 @@ export function extendOverlapWindow(pos: Position, variableNames: Array<string>)
 
     // find domain
     let domain = findDomain(pos);
-    if( domain === undefined)
+    if( domain === undefined) {
       domain = new Range(activeEditor.document.positionAt(0), new Position(activeEditor.document.lineCount - 1, 1));
-
+    }
     // look for variables in statments
     let subdomaincnt = 0;
     let validPos = currentPos;

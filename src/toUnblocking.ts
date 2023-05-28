@@ -4,7 +4,8 @@ import {
     Position,
     Range,
     Selection,
-    TextEditorRevealType
+    TextEditorRevealType,
+    TextEditor
 } from "vscode";
 
 import { confirmationDialog, inputDialog } from "./dialogs";
@@ -13,6 +14,7 @@ import { sendToIsend, recvToIrecv, containsVariables, findDomain , extendOverlap
 import { checkForLoop } from "./forloop";
 
 abstract class BlockingToUnblocking<MPI_Type>{
+  activeEditor: TextEditor | undefined = undefined;
   codestr: string = "";
   isLoop: boolean = false;
 
@@ -32,27 +34,27 @@ abstract class BlockingToUnblocking<MPI_Type>{
   abstract getConflictVariableStr(): string[];
 
   async replace() {
-    let activeEditor = window.activeTextEditor;
-    if (activeEditor === undefined) {
+    this.activeEditor = window.activeTextEditor;
+    if (this.activeEditor === undefined) {
       return;
     }
-    this.codestr = activeEditor.document.getText();
+    this.codestr = this.activeEditor.document.getText();
     this.blockingInst = this.getInstruction();
 
-    let editorPos = activeEditor.document.positionAt(this.pos);
+    let editorPos = this.activeEditor.document.positionAt(this.pos);
 
     let isForLoop = await checkForLoop(editorPos);
     this.isLoop = isForLoop instanceof Position;
     if(this.isLoop){
-      this.loopStr = activeEditor.document.lineAt(isForLoop as Position).text;
+      this.loopStr = this.activeEditor.document.lineAt(isForLoop as Position).text;
       this.loopCntStr = await this.getLoopIterationCount();
       this.loopIterator = await this.getLoopIterator();
     }
 
-    let indentation = activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
+    let indentation = this.activeEditor.document.lineAt(editorPos).text.slice(0, editorPos.character);
     let newLnStr = "\n" + indentation;
     let endSmt = this.codestr.indexOf(';', this.pos);
-    let range = new Range(editorPos, activeEditor.document.positionAt(endSmt+1));
+    let range = new Range(editorPos, this.activeEditor.document.positionAt(endSmt+1));
 
     let prefixStr = await this.getPrefixStr();
     let unblockingStr = this.transformToUnblocking();
@@ -60,9 +62,9 @@ abstract class BlockingToUnblocking<MPI_Type>{
 
     if(!this.isLoop){
       let endSmt = this.codestr.indexOf(';', this.pos);
-      let range = new Range(editorPos, activeEditor.document.positionAt(endSmt+1));
+      let range = new Range(editorPos, this.activeEditor.document.positionAt(endSmt+1));
 
-      await activeEditor.edit((editBuilder) => {
+      await this.activeEditor.edit((editBuilder) => {
           editBuilder.replace(range, prefixStr +
             newLnStr + unblockingStr);
       });
@@ -71,39 +73,45 @@ abstract class BlockingToUnblocking<MPI_Type>{
       let waitPos = extendOverlapWindow(endPos, this.getConflictVariableStr());
       waitPos = await this.checkForFunctionConflict(new Range(endPos?endPos:editorPos, waitPos));
 
-      await activeEditor.edit((editBuilder) => {
+      await this.activeEditor.edit((editBuilder) => {
         editBuilder.insert(waitPos, indentation + suffixStr + "\n");
       });
     } else {
-      await activeEditor.edit((editBuilder) => {
+      await this.activeEditor.edit((editBuilder) => {
           editBuilder.replace(range, unblockingStr);
       });
 
       let prefixPos = (isForLoop instanceof Position) ? isForLoop : editorPos;
-      let indentation = activeEditor.document.lineAt(prefixPos).text.slice(0, prefixPos.character);
+      let indentation = this.activeEditor.document.lineAt(prefixPos).text.slice(0, prefixPos.character);
       let newLnStr = "\n" + indentation;
       
-      await activeEditor.edit((editBuilder) => {
+      await this.activeEditor.edit((editBuilder) => {
           editBuilder.insert(prefixPos, prefixStr + newLnStr);
       });
       
       let endPos = findDomain(editorPos.translate(2))?.end?.translate(1);
       let waitPos = extendOverlapWindow(endPos?endPos:editorPos, this.getConflictVariableStr());
       waitPos = await this.checkForFunctionConflict(new Range(endPos?endPos:editorPos, waitPos));
-      await activeEditor.edit((editBuilder) => {
+      await this.activeEditor.edit((editBuilder) => {
         editBuilder.insert(waitPos, suffixStr);
       });
     }
   }
 
   async checkForFunctionConflict(range: Range){
+      if(this.activeEditor === undefined) {
+        return range.end;
+      }
       let functions = containsFunctionCalls(range);
       let waitPos = range.end;
       for(let i = 0; i < functions.length; i += 1) {
         // TODO: get a better message here!
-        let result = await confirmationDialog("Does function '" + functions[i].name + "' have a datarace with the buffer variable?")
+        let func = functions[i];
+        this.activeEditor.selection = new Selection(func.location.start, func.location.end);
+        this.activeEditor.revealRange(func.location, TextEditorRevealType.InCenter);
+        let result = await confirmationDialog("Does function '" + func.name + "' have a datarace with the buffer variable?")
         if( result ) {
-          waitPos = functions[i].location.start;
+          waitPos = func.location.start;
           break;
         }
       }
