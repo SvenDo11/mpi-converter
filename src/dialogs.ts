@@ -35,5 +35,5 @@ export async function inputDialog(msg: string, value?: string, prompt?: string) 
     value: value,
     prompt: prompt
   });
-  return result;
+  return result === undefined ? "" : result;
 }

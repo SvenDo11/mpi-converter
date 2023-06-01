@@ -172,7 +172,7 @@ export function extendOverlapWindow(pos: Position, variableNames: Array<string>)
       let line = activeEditor.document.lineAt(currentPos).text;
 
       if(line.indexOf("{") !== -1) {
-        if(subdomaincnt == 0 && line.trim()[0] == "{") {
+        if(subdomaincnt === 0 && line.trim()[0] === "{") {
           while(true){
             let line = activeEditor.document.lineAt(validPos.line);
             if(line.isEmptyOrWhitespace || line.text.trimEnd().endsWith(";")){
@@ -197,6 +197,7 @@ export function extendOverlapWindow(pos: Position, variableNames: Array<string>)
     return new Position(validPos.line, 0);
 }
 
+
 interface functionConflict {
   name: String,
   location: Range, 
@@ -205,6 +206,7 @@ interface functionConflict {
 
 // TODO: Fix \t tabs as possible letters, maybe by trimming
 // TODO: Fix function in subdomain error
+// TODO: last valid position should be befor for/while/if statement
 export function containsFunctionCalls(range: Range): functionConflict[] {
     let activeEditor = window.activeTextEditor;
     if (activeEditor === undefined) {
