@@ -6,8 +6,13 @@ import {
     Range,
     TextEditor,
     ProcessExecutionOptions,
+    TextEditorRevealType,
+    Selection,
 } from "vscode";
 import { BroadcastChannel } from "worker_threads";
+import { confirmationDialog } from "./dialogs";
+
+let operators = / |,|.|:|\(|\)|\{|\}|;|=|<|>|\/|\+|\-|\*|\[|\]/;
 
 export function sendToIsend(
     sendSmt: MPI_SendType,
@@ -47,7 +52,7 @@ export function containsVariables(
 ): boolean {
     //line = line.replace(/\s/g, "");
     line = line.trim();
-    let statments = line.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]/);
+    let statments = line.split(/ |,|\(|\)|\{|\}|;|=|<|>|\/|\+|\-|\*|\[|\]/);
     let found = false;
     for (let i = 0; i < statments.length; i++) {
         variableNames.forEach((element) => {
@@ -223,11 +228,38 @@ export function extendOverlapWindow(
     }
     return new Position(validPos.line, 0);
 }
+async function functionConflictDialog(
+    name: string,
+    location: Position
+): Promise<boolean> {
+    let activeEditor = window.activeTextEditor;
+    if (activeEditor === undefined) {
+        return false;
+    }
+    activeEditor.selection = new Selection(
+        location,
+        new Position(location.line, location.character + name.length)
+    );
+    activeEditor.revealRange(
+        new Range(
+            location,
+            new Position(location.line, location.character + name.length)
+        ),
+        TextEditorRevealType.InCenter
+    );
+    let result = await confirmationDialog(
+        "Does function '" + name + "' have a datarace with the buffer variable?"
+    );
 
-export function extendOverlapWindow2(
+    return result;
+}
+
+// TODO: remove comments
+// TODO: Skip known functions such as for, while and if
+export async function extendOverlapWindow2(
     pos: Position,
     variableNames: Array<string>
-) {
+): Promise<Position> {
     let activeEditor = window.activeTextEditor;
     if (activeEditor === undefined) {
         return pos;
@@ -248,85 +280,87 @@ export function extendOverlapWindow2(
                 line.firstNonWhitespaceCharacterIndex
             );
         }
+        subdomainCnt += subDomainChangeInLine(line.text);
+        if (subdomainCnt < 0) {
+            break;
+        }
 
         if (containsVariables(line.text, variableNames)) {
             break;
         }
-    }
-}
 
-interface functionConflict {
-    name: String;
-    location: Range;
-    subdomainPos?: Position;
-}
-
-// TODO: Fix \t tabs as possible letters, maybe by trimming
-// TODO: Fix function in subdomain error
-// TODO: last valid position should be befor for/while/if statement
-export function containsFunctionCalls(range: Range): functionConflict[] {
-    let activeEditor = window.activeTextEditor;
-    if (activeEditor === undefined) {
-        return [];
-    }
-
-    let currentPos = range.start;
-    let lastvalidPos = currentPos;
-    let subdomain = 0;
-    let conflictFunctions: functionConflict[] = [];
-    while (true) {
-        let line = activeEditor.document.lineAt(currentPos);
-        if (!line.isEmptyOrWhitespace) {
-            let lineTxt = line.text;
-            let bracketPos = 0;
-            subdomain += subDomainChangeInLine(lineTxt);
-            while (true) {
-                bracketPos = lineTxt.indexOf("(", bracketPos + 1);
-                if (bracketPos === -1) {
-                    break;
-                }
-                let charPos = bracketPos - 1;
-                while (true) {
-                    if (lineTxt.charAt(charPos) !== " " || charPos === 0) {
-                        break;
-                    }
-                    charPos -= 1;
-                }
-                if (lineTxt.charAt(charPos).match(/\w/) !== null) {
-                    // Found a function
-                    let startCharPos = charPos - 1;
-                    while (true) {
-                        if (
-                            lineTxt.charAt(startCharPos).match(/\w/) !== null &&
-                            startCharPos > 0
-                        ) {
-                            startCharPos -= 1;
-                        } else {
-                            break;
-                        }
-                    }
-                    conflictFunctions.push({
-                        name: lineTxt.substring(startCharPos + 1, charPos + 1),
-                        location: new Range(
-                            new Position(currentPos.line, startCharPos + 1),
-                            new Position(currentPos.line, charPos + 1)
-                        ),
-                        subdomainPos:
-                            subdomain === 0 ? undefined : lastvalidPos,
-                    });
-                }
+        // check for functionCalls
+        let functions = containsFunctionCalls(line.text);
+        let conflict = false;
+        for (let i = 0; i < functions.length; i++) {
+            let location = new Position(currentPos.line, functions[i].location);
+            if (await functionConflictDialog(functions[i].name, location)) {
+                conflict = true;
+                break;
             }
         }
-        if (currentPos.line === range.end.line) {
+        if (conflict) {
             break;
         }
         currentPos = currentPos.translate(1);
-        if (subdomain === 0) {
-            lastvalidPos = currentPos;
-        }
     }
 
-    return conflictFunctions;
+    // find validPos
+    while (validPos > pos) {
+        let newPos = validPos.translate(-1);
+        let line = activeEditor.document.lineAt(newPos);
+        if (line.isEmptyOrWhitespace) {
+            validPos = newPos;
+            continue;
+        }
+        let lastChar = line.text.trim().charAt(line.text.trim().length - 1);
+        if (lastChar === ";" || lastChar === "}") {
+            validPos = new Position(
+                validPos.line,
+                activeEditor.document.lineAt(
+                    validPos
+                ).firstNonWhitespaceCharacterIndex
+            );
+            break;
+        }
+        validPos = newPos;
+    }
+    return validPos;
+}
+
+interface functionConflict {
+    name: string;
+    location: number;
+}
+
+export function containsFunctionCalls(line: string): functionConflict[] {
+    let functions: functionConflict[] = [];
+    let currentPos = 0;
+    while (currentPos < line.length) {
+        let pos = line.indexOf("(", currentPos);
+        if (pos === -1) {
+            break;
+        }
+        let toPar = line.substring(currentPos, pos).trimEnd();
+        if (toPar.charAt(toPar.length - 1).match(/\w/) !== null) {
+            let loc = pos;
+            let behind_WS = false;
+            while (loc > 0) {
+                if (line.charAt(loc - 1).match(/\w/) === null) {
+                    if (behind_WS) {
+                        break;
+                    }
+                } else {
+                    behind_WS = true;
+                }
+                loc -= 1;
+            }
+            let funcname = line.substring(loc, pos);
+            functions.push({ name: funcname, location: loc });
+        }
+        currentPos = pos + 1;
+    }
+    return functions;
 }
 
 export function subDomainChangeInLine(line: string): number {

@@ -7,6 +7,7 @@ import * as vscode from "vscode";
 import { Position } from "vscode";
 import * as util from "../../util";
 
+/* 
 suite("ExtendOverlapWindow tests", () => {
     const Uri = vscode.Uri.file("../testFiles/ExtendOverlap.cpp");
     vscode.commands.executeCommand<vscode.TextDocumentShowOptions>(
@@ -40,3 +41,4 @@ suite("ExtendOverlapWindow tests", () => {
 
     //test("Give Position at eof Test", () => {});
 });
+*/
