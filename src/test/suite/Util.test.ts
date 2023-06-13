@@ -7,6 +7,40 @@ import * as vscode from "vscode";
 import { Position } from "vscode";
 import * as util from "../../util";
 
+suite("removeComments Tests", () => {
+    test("no Comment test", () => {
+        let testString = "This string has no comments; int i = 42;";
+        let result = util.removeComments(testString);
+        assert.strictEqual(
+            result,
+            testString,
+            "removeComments changed a string with no comments.(which it shouldn't have)."
+        );
+    });
+
+    test("Doubleslash comment test", () => {
+        let testString =
+            "std::string test = 'Hello World!';\nif( i == 0 ) // Check for no itteration";
+        let expectedString =
+            "std::string test = 'Hello World!';\nif( i == 0 )                           ";
+        let result = util.removeComments(testString);
+        assert.strictEqual(
+            result,
+            expectedString,
+            "Double slash comment was not removed correctly."
+        );
+
+        testString = "int i = 42*69; //This is a comment xD";
+        expectedString = "int i = 42*69;                       ";
+        result = util.removeComments(testString);
+        assert.strictEqual(
+            result,
+            expectedString,
+            "Double slash comment with no space after the second slash failed"
+        );
+    });
+});
+
 /* 
 suite("ExtendOverlapWindow tests", () => {
     const Uri = vscode.Uri.file("../testFiles/ExtendOverlap.cpp");

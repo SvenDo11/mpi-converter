@@ -13,6 +13,7 @@ import { BroadcastChannel } from "worker_threads";
 import { confirmationDialog } from "./dialogs";
 
 let operators = / |,|.|:|\(|\)|\{|\}|;|=|<|>|\/|\+|\-|\*|\[|\]/;
+let knownFunctions = ["for", "while", "if", "printf", "cout"];
 
 export function sendToIsend(
     sendSmt: MPI_SendType,
@@ -173,61 +174,6 @@ export function extractParams(
     return params;
 }
 
-export function extendOverlapWindow(
-    pos: Position,
-    variableNames: Array<string>
-): Position {
-    let activeEditor = window.activeTextEditor;
-    if (activeEditor === undefined) {
-        return pos;
-    }
-
-    let currentPos = pos.translate(1);
-
-    // find domain
-    let domain = findDomain(pos);
-    if (domain === undefined) {
-        domain = new Range(
-            activeEditor.document.positionAt(0),
-            new Position(activeEditor.document.lineCount - 1, 1)
-        );
-    }
-    // look for variables in statments
-    let subdomaincnt = 0;
-    let validPos = currentPos;
-    while (true) {
-        if (!domain.contains(currentPos)) break;
-
-        let line = activeEditor.document.lineAt(currentPos).text;
-
-        if (line.indexOf("{") !== -1) {
-            if (subdomaincnt === 0 && line.trim()[0] === "{") {
-                while (true) {
-                    let line = activeEditor.document.lineAt(validPos.line);
-                    if (
-                        line.isEmptyOrWhitespace ||
-                        line.text.trimEnd().endsWith(";")
-                    ) {
-                        validPos = new Position(validPos.line + 1, 0);
-                        break;
-                    }
-                    validPos = validPos.translate(-1);
-                }
-            }
-            subdomaincnt++;
-        }
-        if (line.indexOf("}") !== -1) subdomaincnt--;
-
-        // check for variables
-        if (containsVariables(line, variableNames)) {
-            break;
-        }
-
-        currentPos = currentPos.translate(1);
-        if (subdomaincnt == 0) validPos = currentPos;
-    }
-    return new Position(validPos.line, 0);
-}
 async function functionConflictDialog(
     name: string,
     location: Position
@@ -254,9 +200,7 @@ async function functionConflictDialog(
     return result;
 }
 
-// TODO: remove comments
-// TODO: Skip known functions such as for, while and if
-export async function extendOverlapWindow2(
+export async function extendOverlapWindow(
     pos: Position,
     variableNames: Array<string>
 ): Promise<Position> {
@@ -265,7 +209,7 @@ export async function extendOverlapWindow2(
         return pos;
     }
 
-    let currentPos = pos.translate(1);
+    let currentPos = pos; //pos.translate(1);
     let subdomainCnt = 0;
     let validPos = currentPos;
     while (currentPos.line <= activeEditor.document.lineCount) {
@@ -274,26 +218,31 @@ export async function extendOverlapWindow2(
             currentPos = currentPos.translate(1);
             continue;
         }
+
+        let lineTxt = removeComments(line.text);
         if (subdomainCnt === 0) {
             validPos = new Position(
                 currentPos.line,
                 line.firstNonWhitespaceCharacterIndex
             );
         }
-        subdomainCnt += subDomainChangeInLine(line.text);
+        subdomainCnt += subDomainChangeInLine(lineTxt);
         if (subdomainCnt < 0) {
             break;
         }
 
-        if (containsVariables(line.text, variableNames)) {
+        if (containsVariables(lineTxt, variableNames)) {
             break;
         }
 
         // check for functionCalls
-        let functions = containsFunctionCalls(line.text);
+        let functions = containsFunctionCalls(lineTxt);
         let conflict = false;
         for (let i = 0; i < functions.length; i++) {
             let location = new Position(currentPos.line, functions[i].location);
+            if (knownFunctions.includes(functions[i].name.trim())) {
+                continue;
+            }
             if (await functionConflictDialog(functions[i].name, location)) {
                 conflict = true;
                 break;
@@ -313,7 +262,8 @@ export async function extendOverlapWindow2(
             validPos = newPos;
             continue;
         }
-        let lastChar = line.text.trim().charAt(line.text.trim().length - 1);
+        let lineTxt = removeComments(line.text);
+        let lastChar = lineTxt.trim().charAt(lineTxt.trim().length - 1);
         if (lastChar === ";" || lastChar === "}") {
             validPos = new Position(
                 validPos.line,
@@ -382,4 +332,51 @@ export function subDomainChangeInLine(line: string): number {
         }
     }
     return dif;
+}
+
+export function removeComments(line: string): string {
+    enum States {
+        noComment,
+        oneSlash,
+        doubleSlash,
+        slashStar,
+    }
+    let newLine = "";
+    let state = States.noComment;
+    for (let i = 0; i < line.length; i += 1) {
+        let char = line[i];
+        switch (state) {
+            case States.noComment:
+                if (char === "/") {
+                    state = States.oneSlash;
+                } else {
+                    newLine += char;
+                }
+                break;
+            case States.oneSlash:
+                if (char === "/") {
+                    newLine += "  ";
+                    state = States.doubleSlash;
+                } else if (char === "*") {
+                    newLine += "  ";
+                    state = States.slashStar;
+                } else {
+                    newLine += "/" + char;
+                    state = States.noComment;
+                }
+                break;
+            case States.doubleSlash:
+                newLine += " ";
+                break;
+            case States.slashStar:
+                if (char === "/" && line[i - 1] === "*") {
+                    newLine += " ";
+                    state = States.noComment;
+                } else {
+                    newLine += " ";
+                }
+                break;
+        }
+    }
+    return newLine;
 }

@@ -17,8 +17,6 @@ import {
     findDomain,
     extendOverlapWindow,
     extractParams,
-    containsFunctionCalls,
-    extendOverlapWindow2,
 } from "./util";
 import { checkForLoop } from "./forloop";
 
@@ -91,7 +89,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
             });
 
             let endPos = range.end.translate(1);
-            let waitPos = await extendOverlapWindow2(
+            let waitPos = await extendOverlapWindow(
                 endPos,
                 await this.getConflictVariableStr()
             );
@@ -100,6 +98,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
                 editBuilder.insert(waitPos, indentation + suffixStr + "\n");
             });
         } else {
+            // TODO: Find function conflict in the loop domain
             await this.activeEditor.edit((editBuilder) => {
                 editBuilder.replace(range, unblockingStr);
             });
@@ -115,8 +114,9 @@ abstract class BlockingToUnblocking<MPI_Type> {
                 editBuilder.insert(prefixPos, prefixStr + newLnStr);
             });
 
+            // TODO: Run a (find conflict function here to determin if a conflict is within the loop body)
             let endPos = findDomain(editorPos.translate(2))?.end?.translate(1);
-            let waitPos = await extendOverlapWindow2(
+            let waitPos = await extendOverlapWindow(
                 endPos ? endPos : editorPos,
                 await this.getConflictVariableStr()
             );
