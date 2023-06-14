@@ -52,12 +52,36 @@ abstract class BlockingToUnblocking<MPI_Type> {
 
         let isForLoop = await checkForLoop(editorPos);
         this.isLoop = isForLoop instanceof Position;
+
+        let foundWaitPos = editorPos;
+        let foundWait = false;
+
         if (this.isLoop) {
-            this.loopStr = this.activeEditor.document.lineAt(
-                isForLoop as Position
-            ).text;
-            this.loopCntStr = await this.getLoopIterationCount();
-            this.loopIterator = await this.getLoopIterator();
+            // Check if a conlflict is allready found in the loop:
+            let conflict = await extendOverlapWindow(
+                this.getEndOfStatmentPos(editorPos),
+                await this.getConflictVariableStr()
+            );
+
+            if (conflict.conflict) {
+                window.showInformationMessage(
+                    "The blocking MPI instruction was found to be in a loop. \
+                But because of a conflict, the MPI_wait call cannot be outside the for loop. \
+                This severly impacts the possible performance gain from using unblocking instructions.\
+                You can manually change your code, to put the conflicting statement outside the for loop and past other statements, if possible. \
+                Another run of this tool may then find a better optimisation."
+                );
+
+                this.isLoop = false;
+                foundWait = true;
+                foundWaitPos = conflict.pos;
+            } else {
+                this.loopStr = this.activeEditor.document.lineAt(
+                    isForLoop as Position
+                ).text;
+                this.loopCntStr = await this.getLoopIterationCount();
+                this.loopIterator = await this.getLoopIterator();
+            }
         }
 
         let indentation = this.activeEditor.document
@@ -81,24 +105,27 @@ abstract class BlockingToUnblocking<MPI_Type> {
                 this.activeEditor.document.positionAt(endSmt + 1)
             );
 
+            let endPos = range.end.translate(1);
+            let waitPos = foundWait
+                ? foundWaitPos
+                : (
+                      await extendOverlapWindow(
+                          endPos,
+                          await this.getConflictVariableStr()
+                      )
+                  ).pos;
+
+            await this.activeEditor.edit((editBuilder) => {
+                editBuilder.insert(waitPos, indentation + suffixStr + "\n");
+            });
+
             await this.activeEditor.edit((editBuilder) => {
                 editBuilder.replace(
                     range,
                     prefixStr + newLnStr + unblockingStr
                 );
             });
-
-            let endPos = range.end.translate(1);
-            let waitPos = await extendOverlapWindow(
-                endPos,
-                await this.getConflictVariableStr()
-            );
-
-            await this.activeEditor.edit((editBuilder) => {
-                editBuilder.insert(waitPos, indentation + suffixStr + "\n");
-            });
         } else {
-            // TODO: Find function conflict in the loop domain
             await this.activeEditor.edit((editBuilder) => {
                 editBuilder.replace(range, unblockingStr);
             });
@@ -114,13 +141,13 @@ abstract class BlockingToUnblocking<MPI_Type> {
                 editBuilder.insert(prefixPos, prefixStr + newLnStr);
             });
 
-            // TODO: Run a (find conflict function here to determin if a conflict is within the loop body)
             let endPos = findDomain(editorPos.translate(2))?.end?.translate(1);
-            let waitPos = await extendOverlapWindow(
-                endPos ? endPos : editorPos,
-                await this.getConflictVariableStr()
-            );
-            //waitPos = await this.checkForFunctionConflict(new Range(endPos?endPos:editorPos, waitPos));
+            let waitPos = (
+                await extendOverlapWindow(
+                    endPos ? endPos : editorPos,
+                    await this.getConflictVariableStr()
+                )
+            ).pos;
             await this.activeEditor.edit((editBuilder) => {
                 editBuilder.insert(waitPos, suffixStr);
             });
@@ -175,9 +202,25 @@ abstract class BlockingToUnblocking<MPI_Type> {
         }
         return iteratorString;
     }
+
+    getEndOfStatmentPos(pos: Position): Position {
+        if (this.activeEditor === undefined) {
+            return pos;
+        }
+        let currentPos = pos;
+        while (currentPos.line <= this.activeEditor.document.lineCount) {
+            let line = this.activeEditor.document.lineAt(pos);
+            if (line.text.indexOf(";") !== -1) {
+                return currentPos.translate(1);
+            }
+        }
+        return currentPos;
+    }
 }
 
 class SendConverter extends BlockingToUnblocking<MPI_SendType> {
+    conflictVariableStr: string[] | undefined = undefined;
+
     getInstruction(): MPI_SendType {
         let params = extractParams(this.codestr, this.pos);
 
@@ -230,6 +273,9 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
     }
 
     async getConflictVariableStr(): Promise<string[]> {
+        if (this.conflictVariableStr !== undefined) {
+            return this.conflictVariableStr;
+        }
         if (this.blockingInst === undefined) {
             throw new Error("Blocking instruciton not set!");
         }
@@ -242,11 +288,13 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
                 "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
             );
         }
+        this.conflictVariableStr = [buf];
         return [buf];
     }
 }
 
 class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
+    conflictVariableStr: string[] | undefined = undefined;
     getInstruction(): MPI_RecvType {
         let params = extractParams(this.codestr, this.pos);
 
@@ -301,6 +349,9 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
     }
 
     async getConflictVariableStr(): Promise<string[]> {
+        if (this.conflictVariableStr !== undefined) {
+            return this.conflictVariableStr;
+        }
         if (this.blockingInst === undefined) {
             throw new Error("Blocking instruciton not set!");
         }
@@ -313,6 +364,7 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
                 "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
             );
         }
+        this.conflictVariableStr = [buf, this.blockingInst.status];
         return [buf, this.blockingInst.status];
     }
 }

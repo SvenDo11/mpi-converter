@@ -203,15 +203,16 @@ async function functionConflictDialog(
 export async function extendOverlapWindow(
     pos: Position,
     variableNames: Array<string>
-): Promise<Position> {
+): Promise<{ pos: Position; conflict: boolean }> {
     let activeEditor = window.activeTextEditor;
     if (activeEditor === undefined) {
-        return pos;
+        return { pos: pos, conflict: false };
     }
 
     let currentPos = pos; //pos.translate(1);
     let subdomainCnt = 0;
     let validPos = currentPos;
+    let foundConflict = false;
     while (currentPos.line <= activeEditor.document.lineCount) {
         let line = activeEditor.document.lineAt(currentPos);
         if (line.isEmptyOrWhitespace) {
@@ -232,6 +233,7 @@ export async function extendOverlapWindow(
         }
 
         if (containsVariables(lineTxt, variableNames)) {
+            foundConflict = true;
             break;
         }
 
@@ -249,6 +251,7 @@ export async function extendOverlapWindow(
             }
         }
         if (conflict) {
+            foundConflict = true;
             break;
         }
         currentPos = currentPos.translate(1);
@@ -275,7 +278,7 @@ export async function extendOverlapWindow(
         }
         validPos = newPos;
     }
-    return validPos;
+    return { pos: validPos, conflict: foundConflict };
 }
 
 interface functionConflict {
