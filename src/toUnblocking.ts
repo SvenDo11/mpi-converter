@@ -30,6 +30,9 @@ abstract class BlockingToUnblocking<MPI_Type> {
     loopCntStr = "N";
     loopIterator: string = "";
 
+    status = "status";
+    request = "request";
+
     constructor(public pos: number) {}
 
     abstract getInstruction(): MPI_Type;
@@ -243,21 +246,37 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
     }
 
     async getPrefixStr(): Promise<string> {
-        // TODO: get status and request variable names.
-        let statusStr = "MPI_Status status;";
-        let requestStr = "MPI_Request request;";
+        this.status = await inputDialog(
+            "What should the status variable be named?:",
+            "status"
+        );
+        this.request = await inputDialog(
+            "What should the request variable be named?:",
+            "request"
+        );
+
+        let statusStr = "MPI_Status " + this.status + ";";
+        let requestStr = "MPI_Request " + this.request + ";";
         if (this.isLoop) {
-            // TODO: get the righthandside of the loop iterations
-            statusStr = "MPI_Status status[" + this.loopCntStr + "];";
-            requestStr = "MPI_Request request[" + this.loopCntStr + "];";
+            statusStr =
+                "MPI_Status  " + this.status + "[" + this.loopCntStr + "];";
+            requestStr =
+                "MPI_Request " + this.request + "[" + this.loopCntStr + "];";
         }
         return statusStr + "\n" + requestStr;
     }
 
     getSuffixStr(): string {
-        let waitStr = "MPI_Wait(&request, &status);";
+        let waitStr = "MPI_Wait(&" + this.request + ", &" + this.status + ");";
         if (this.isLoop) {
-            waitStr = "MPI_Waitall(" + this.loopCntStr + ", request, status);";
+            waitStr =
+                "MPI_Waitall(" +
+                this.loopCntStr +
+                ", " +
+                this.request +
+                ", " +
+                this.status +
+                ");";
         }
         return waitStr;
     }
@@ -268,7 +287,9 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
         }
         return sendToIsend(
             this.blockingInst,
-            this.isLoop ? "request[" + this.loopIterator + "]" : "request"
+            this.isLoop
+                ? this.request + "[" + this.loopIterator + "]"
+                : this.request
         );
     }
 
@@ -318,21 +339,33 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
     }
 
     async getPrefixStr(): Promise<string> {
-        let requestStr = "MPI_Request request;";
+        this.request = await inputDialog(
+            "What should the request variable be named?:",
+            "request"
+        );
+        let requestStr = "MPI_Request " + this.request + ";";
+
         if (this.isLoop) {
-            //TODO: get the righthandside of the loop iterations
             this.loopCntStr = await this.getLoopIterationCount();
-            requestStr = "MPI_Request request[" + this.loopCntStr + "];";
+            requestStr =
+                "MPI_Request " + this.request + "[" + this.loopCntStr + "];";
         }
         return requestStr;
     }
     getSuffixStr(): string {
-        let waitStr = "MPI_Wait(&request, &" + this.blockingInst?.status + ");";
+        let waitStr =
+            "MPI_Wait(&" +
+            this.request +
+            ", &" +
+            this.blockingInst?.status +
+            ");";
         if (this.isLoop) {
             waitStr =
                 "MPI_Waitall(" +
                 this.loopCntStr +
-                ", request, " +
+                ", " +
+                this.request +
+                ", " +
                 this.blockingInst?.status +
                 ");";
         }
@@ -344,7 +377,9 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
         }
         return recvToIrecv(
             this.blockingInst,
-            this.isLoop ? "request[i]" : "request"
+            this.isLoop
+                ? this.request + "[" + this.loopIterator + "]"
+                : this.request
         );
     }
 
