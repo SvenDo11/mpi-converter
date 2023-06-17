@@ -17,8 +17,12 @@ import {
     findDomain,
     extendOverlapWindow,
     extractParams,
+    removeComments,
 } from "./util";
 import { checkForLoop } from "./forloop";
+
+// TODO: Fix MPI Statement in comment error for finding MPI_Send/ MPI_recv
+// TODO: Fix reference symbol for array buffer variable (Same for pointer)
 
 abstract class BlockingToUnblocking<MPI_Type> {
     activeEditor: TextEditor | undefined = undefined;
@@ -412,17 +416,21 @@ export async function blockingToUnblockingMain() {
     let searchStrings = ["MPI_Send", "MPI_Recv"];
     for (let i = 0; i < 2; i += 1) {
         let searchString = searchStrings[i];
-        let lastIndex = 0;
-        while (true) {
-            let codestr = activeEditor.document.getText();
-            let index = codestr.indexOf(searchString, lastIndex);
-            if (index === -1) {
-                break;
+        let currentline = 1;
+        while(currentline <= activeEditor.document.lineCount) {
+            let line = activeEditor.document.lineAt(new Position(currentline, 1));
+            if(line.isEmptyOrWhitespace) {
+                currentline += 1;
+                continue;
             }
 
-            let position = activeEditor.document.positionAt(index);
-            lastIndex = index + 1;
-
+            let lineTxt = removeComments(line.text);
+            let index = lineTxt.indexOf(searchString);
+            if (index === -1) {
+                currentline += 1;
+                continue;
+            }
+            let position = new Position(currentline, index);
             let rep = new Range(
                 position,
                 new Position(
@@ -437,6 +445,7 @@ export async function blockingToUnblockingMain() {
                 "Turn this statement into an unblocking one?"
             );
 
+            // TODO: convert MPI Converter to use positions instead of indices
             if (result) {
                 if (i === 0) {
                     let replacer = new SendConverter(index);
@@ -446,6 +455,8 @@ export async function blockingToUnblockingMain() {
                     await replacer.replace();
                 }
             }
+
+            currentline += 1;
         }
     }
 }
