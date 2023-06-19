@@ -10,23 +10,10 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:mpiconv.helloWorld"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "mpiconv.helloWorld",
-        "title": "Hello World"
-      },
-      {
-        "command": "mpiconv.tellTime",
-        "title": "What does the clock say?"
-      },
-      {
-        "command": "mpiconv.replaceMe",
-        "title": "Replace Me"
-      },
       {
         "command": "mpiconv.convertToUnblocking",
         "title": "Convert MPI statements"
@@ -51,7 +38,28 @@
           "description": "Show an error message, whenever an potential datarace can be within some sub domain."
         }
       }
-    }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mpi-converter",
+          "icon": "Icon.png",
+          "title": "MPI Converter"
+        }
+      ]
+    },
+    "views": {
+      "mpi-converter": [
+        {
+          "id": "test",
+          "name": "Modernise MPI"
+        }
+      ]
+    },
+    "viewsWelcome": [{
+      "view": "mpiconv.mpi-converter.test",
+      "contents": "Run the mpi converter on the currently open file.\n[Run MPI Converter](command:convertToUnblocking)"
+    }]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
