@@ -98,7 +98,10 @@ abstract class BlockingToUnblocking<MPI_Type> {
         let newLnStr = "\n" + indentation;
 
         // TODO: This is bad. Make it better, pls
-        let endSmt = this.codestr.indexOf(";", this.activeEditor.document.offsetAt(this.pos));
+        let endSmt = this.codestr.indexOf(
+            ";",
+            this.activeEditor.document.offsetAt(this.pos)
+        );
         let range = new Range(
             editorPos,
             this.activeEditor.document.positionAt(endSmt + 1)
@@ -109,7 +112,10 @@ abstract class BlockingToUnblocking<MPI_Type> {
         let suffixStr = this.getSuffixStr();
 
         if (!this.isLoop) {
-            let endSmt = this.codestr.indexOf(";", this.activeEditor.document.offsetAt(this.pos));
+            let endSmt = this.codestr.indexOf(
+                ";",
+                this.activeEditor.document.offsetAt(this.pos)
+            );
             let range = new Range(
                 editorPos,
                 this.activeEditor.document.positionAt(endSmt + 1)
@@ -232,10 +238,13 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
     conflictVariableStr: string[] | undefined = undefined;
 
     getInstruction(): MPI_SendType {
-        if(this.activeEditor === undefined) {
-            throw new Error("activeEditor was not set.")
+        if (this.activeEditor === undefined) {
+            throw new Error("activeEditor was not set.");
         }
-        let params = extractParams(this.codestr, this.activeEditor.document.offsetAt(this.pos));
+        let params = extractParams(
+            this.codestr,
+            this.activeEditor.document.offsetAt(this.pos)
+        );
 
         if (params.length !== 6) {
             throw new Error(
@@ -311,13 +320,15 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
             throw new Error("Blocking instruciton not set!");
         }
         let buf = this.blockingInst.buf;
-        let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]/);
+        let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|&/);
         if (statments.length > 1) {
             buf = await inputDialog(
                 "What is the buffer for the MPI message?",
                 statments[0],
                 "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
             );
+        } else {
+            buf = statments[0];
         }
         this.conflictVariableStr = [buf];
         return [buf];
@@ -327,10 +338,13 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
 class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
     conflictVariableStr: string[] | undefined = undefined;
     getInstruction(): MPI_RecvType {
-        if(this.activeEditor === undefined) {
-            throw new Error("Active editor not set.")
+        if (this.activeEditor === undefined) {
+            throw new Error("Active editor not set.");
         }
-        let params = extractParams(this.codestr, this.activeEditor.document.offsetAt(this.pos));
+        let params = extractParams(
+            this.codestr,
+            this.activeEditor.document.offsetAt(this.pos)
+        );
 
         if (params.length !== 7) {
             throw new Error(
@@ -426,9 +440,11 @@ export async function blockingToUnblockingMain() {
     for (let i = 0; i < 2; i += 1) {
         let searchString = searchStrings[i];
         let currentline = 1;
-        while(currentline <= activeEditor.document.lineCount) {
-            let line = activeEditor.document.lineAt(new Position(currentline, 1));
-            if(line.isEmptyOrWhitespace) {
+        while (currentline <= activeEditor.document.lineCount) {
+            let line = activeEditor.document.lineAt(
+                new Position(currentline, 1)
+            );
+            if (line.isEmptyOrWhitespace) {
                 currentline += 1;
                 continue;
             }
