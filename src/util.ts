@@ -213,7 +213,7 @@ export async function extendOverlapWindow(
     let subdomainCnt = 0;
     let validPos = currentPos;
     let foundConflict = false;
-    while (currentPos.line <= activeEditor.document.lineCount) {
+    while (currentPos.line < activeEditor.document.lineCount) {
         let line = activeEditor.document.lineAt(currentPos);
         if (line.isEmptyOrWhitespace) {
             currentPos = currentPos.translate(1);

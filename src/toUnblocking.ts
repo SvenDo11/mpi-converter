@@ -224,7 +224,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
             return pos;
         }
         let currentPos = pos;
-        while (currentPos.line <= this.activeEditor.document.lineCount) {
+        while (currentPos.line < this.activeEditor.document.lineCount) {
             let line = this.activeEditor.document.lineAt(pos);
             if (line.text.indexOf(";") !== -1) {
                 return currentPos.translate(1);
@@ -322,11 +322,11 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
         let buf = this.blockingInst.buf;
         let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|&/);
         if (statments.length > 1) {
-            let guessedbuffer = '';
-            for(let i = 0; i < statments.length; i += 1){
+            let guessedbuffer = "";
+            for (let i = 0; i < statments.length; i += 1) {
                 guessedbuffer = statments[i];
-                if(guessedbuffer !== '') {
-                   break; 
+                if (guessedbuffer !== "") {
+                    break;
                 }
             }
             buf = await inputDialog(
@@ -365,7 +365,7 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
             source: params[3],
             tag: params[4],
             comm: params[5],
-            status: params[6].replace("&", "").trim(),
+            status: params[6].trim(),
         };
         return recvSmt;
     }
@@ -378,7 +378,6 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
         let requestStr = "MPI_Request " + this.request + ";";
 
         if (this.isLoop) {
-            this.loopCntStr = await this.getLoopIterationCount();
             requestStr =
                 "MPI_Request " + this.request + "[" + this.loopCntStr + "];";
         }
@@ -388,7 +387,7 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
         let waitStr =
             "MPI_Wait(&" +
             this.request +
-            ", &" +
+            ", " +
             this.blockingInst?.status +
             ");";
         if (this.isLoop) {
@@ -425,11 +424,11 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
         let buf = this.blockingInst.buf;
         let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|&/);
         if (statments.length > 1) {
-            let guessedbuffer = '';
-            for(let i = 0; i < statments.length; i += 1){
+            let guessedbuffer = "";
+            for (let i = 0; i < statments.length; i += 1) {
                 guessedbuffer = statments[i];
-                if(guessedbuffer !== '') {
-                   break; 
+                if (guessedbuffer !== "") {
+                    break;
                 }
             }
             buf = await inputDialog(
@@ -449,17 +448,14 @@ export async function blockingToUnblockingMain() {
         return;
     }
     let searchStrings = ["MPI_Send", "MPI_Recv"];
-    console.log("Linecount: " + activeEditor.document.lineCount);
-    console.log(activeEditor.document.lineAt(0).text);
     for (let i = 0; i < 2; i += 1) {
         let searchString = searchStrings[i];
-        let currentline = 1;
-        while (currentline <= activeEditor.document.lineCount) {
-            console.log("Checking line " + currentline);
+        let currentline = 0;
+        while (currentline < activeEditor.document.lineCount) {
             let line = activeEditor.document.lineAt(
                 new Position(currentline, 1)
             );
-            if(currentline === 47) {
+            if (currentline === 47) {
                 console.log(line.text);
             }
             if (line.isEmptyOrWhitespace) {
