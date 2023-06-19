@@ -20,6 +20,7 @@ import {
     removeComments,
 } from "./util";
 import { checkForLoop } from "./forloop";
+import { error } from "console";
 
 // TODO: Fix MPI Statement in comment error for finding MPI_Send/ MPI_recv
 // TODO: Fix reference symbol for array buffer variable (Same for pointer)
@@ -37,7 +38,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
     status = "status";
     request = "request";
 
-    constructor(public pos: number) {}
+    constructor(public pos: Position) {}
 
     abstract getInstruction(): MPI_Type;
 
@@ -55,7 +56,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
         this.codestr = this.activeEditor.document.getText();
         this.blockingInst = this.getInstruction();
 
-        let editorPos = this.activeEditor.document.positionAt(this.pos);
+        let editorPos = this.pos;
 
         let isForLoop = await checkForLoop(editorPos);
         this.isLoop = isForLoop instanceof Position;
@@ -95,7 +96,9 @@ abstract class BlockingToUnblocking<MPI_Type> {
             .lineAt(editorPos)
             .text.slice(0, editorPos.character);
         let newLnStr = "\n" + indentation;
-        let endSmt = this.codestr.indexOf(";", this.pos);
+
+        // TODO: This is bad. Make it better, pls
+        let endSmt = this.codestr.indexOf(";", this.activeEditor.document.offsetAt(this.pos));
         let range = new Range(
             editorPos,
             this.activeEditor.document.positionAt(endSmt + 1)
@@ -106,7 +109,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
         let suffixStr = this.getSuffixStr();
 
         if (!this.isLoop) {
-            let endSmt = this.codestr.indexOf(";", this.pos);
+            let endSmt = this.codestr.indexOf(";", this.activeEditor.document.offsetAt(this.pos));
             let range = new Range(
                 editorPos,
                 this.activeEditor.document.positionAt(endSmt + 1)
@@ -229,7 +232,10 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
     conflictVariableStr: string[] | undefined = undefined;
 
     getInstruction(): MPI_SendType {
-        let params = extractParams(this.codestr, this.pos);
+        if(this.activeEditor === undefined) {
+            throw new Error("activeEditor was not set.")
+        }
+        let params = extractParams(this.codestr, this.activeEditor.document.offsetAt(this.pos));
 
         if (params.length !== 6) {
             throw new Error(
@@ -321,7 +327,10 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
 class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
     conflictVariableStr: string[] | undefined = undefined;
     getInstruction(): MPI_RecvType {
-        let params = extractParams(this.codestr, this.pos);
+        if(this.activeEditor === undefined) {
+            throw new Error("Active editor not set.")
+        }
+        let params = extractParams(this.codestr, this.activeEditor.document.offsetAt(this.pos));
 
         if (params.length !== 7) {
             throw new Error(
@@ -445,13 +454,12 @@ export async function blockingToUnblockingMain() {
                 "Turn this statement into an unblocking one?"
             );
 
-            // TODO: convert MPI Converter to use positions instead of indices
             if (result) {
                 if (i === 0) {
-                    let replacer = new SendConverter(index);
+                    let replacer = new SendConverter(position);
                     await replacer.replace();
                 } else {
-                    let replacer = new RecvConverter(index);
+                    let replacer = new RecvConverter(position);
                     await replacer.replace();
                 }
             }
