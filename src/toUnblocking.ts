@@ -322,13 +322,18 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
         let buf = this.blockingInst.buf;
         let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|&/);
         if (statments.length > 1) {
+            let guessedbuffer = '';
+            for(let i = 0; i < statments.length; i += 1){
+                guessedbuffer = statments[i];
+                if(guessedbuffer !== '') {
+                   break; 
+                }
+            }
             buf = await inputDialog(
                 "What is the buffer for the MPI message?",
-                statments[0],
+                guessedbuffer,
                 "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
             );
-        } else {
-            buf = statments[0];
         }
         this.conflictVariableStr = [buf];
         return [buf];
@@ -418,11 +423,18 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
             throw new Error("Blocking instruciton not set!");
         }
         let buf = this.blockingInst.buf;
-        let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]/);
+        let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|&/);
         if (statments.length > 1) {
+            let guessedbuffer = '';
+            for(let i = 0; i < statments.length; i += 1){
+                guessedbuffer = statments[i];
+                if(guessedbuffer !== '') {
+                   break; 
+                }
+            }
             buf = await inputDialog(
                 "What is the buffer for the MPI message?",
-                statments[0],
+                guessedbuffer,
                 "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
             );
         }
@@ -437,13 +449,19 @@ export async function blockingToUnblockingMain() {
         return;
     }
     let searchStrings = ["MPI_Send", "MPI_Recv"];
+    console.log("Linecount: " + activeEditor.document.lineCount);
+    console.log(activeEditor.document.lineAt(0).text);
     for (let i = 0; i < 2; i += 1) {
         let searchString = searchStrings[i];
         let currentline = 1;
         while (currentline <= activeEditor.document.lineCount) {
+            console.log("Checking line " + currentline);
             let line = activeEditor.document.lineAt(
                 new Position(currentline, 1)
             );
+            if(currentline === 47) {
+                console.log(line.text);
+            }
             if (line.isEmptyOrWhitespace) {
                 currentline += 1;
                 continue;
