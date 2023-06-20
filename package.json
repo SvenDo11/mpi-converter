@@ -38,6 +38,12 @@
           "type":"boolean",
           "default": "true",
           "description": "Show an error message, whenever an potential datarace can be within some sub domain."
+        },
+        "mpiconv.FunctionDataRace": {
+          "type":"string",
+          "enum": ["ask", "always", "never"],
+          "default": "ask",
+          "description": "Determines how the programm will deal with a possible data race conflict in a function. Can be 'ask', 'always' or 'never'\n    -'ask': Ask the user if a conflict exists with a dialog window.\n    -'always': Always asume that a conflic exists.\n    -'never': Always asume that no conflict exists (Requires user to check for dataraces themself."
         }
       }
     },
