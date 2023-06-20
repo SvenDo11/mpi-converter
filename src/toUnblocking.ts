@@ -18,14 +18,17 @@ import {
     extendOverlapWindow,
     extractParams,
     removeComments,
+    removeChars,
 } from "./util";
 import { checkForLoop } from "./forloop";
 import { error } from "console";
+import { stat } from "fs";
 
 abstract class BlockingToUnblocking<MPI_Type> {
     activeEditor: TextEditor | undefined = undefined;
     codestr: string = "";
     isLoop: boolean = false;
+    loopPos?: Position;
 
     blockingInst: MPI_Type | undefined;
     loopStr: string = "";
@@ -45,6 +48,8 @@ abstract class BlockingToUnblocking<MPI_Type> {
 
     abstract getConflictVariableStr(): Promise<string[]>;
 
+    abstract afterReplace(): Promise<void>;
+
     async replace() {
         this.activeEditor = window.activeTextEditor;
         if (this.activeEditor === undefined) {
@@ -62,7 +67,8 @@ abstract class BlockingToUnblocking<MPI_Type> {
         let foundWait = false;
 
         if (this.isLoop) {
-            // Check if a conlflict is allready found in the loop:
+            this.loopPos = isForLoop as Position;
+            // Check if a conflict is allready found in the loop:
             let conflict = await extendOverlapWindow(
                 this.getEndOfStatmentPos(editorPos),
                 await this.getConflictVariableStr()
@@ -81,9 +87,9 @@ abstract class BlockingToUnblocking<MPI_Type> {
                 foundWait = true;
                 foundWaitPos = conflict.pos;
             } else {
-                this.loopStr = this.activeEditor.document.lineAt(
+                this.loopStr = removeComments(this.activeEditor.document.lineAt(
                     isForLoop as Position
-                ).text;
+                ).text).line;
                 this.loopCntStr = await this.getLoopIterationCount();
                 this.loopIterator = await this.getLoopIterator();
             }
@@ -179,6 +185,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
                 editBuilder.insert(waitPos, suffixStr + "\n" + indentation);
             });
         }
+        await this.afterReplace();
     }
 
     async getLoopIterationCount(): Promise<string> {
@@ -355,10 +362,16 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
         this.conflictVariableStr = [buf];
         return [buf];
     }
+
+    async afterReplace(): Promise<void> {
+        // Empty on purpose;
+    }
 }
 
 class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
     conflictVariableStr: string[] | undefined = undefined;
+    useOldStatus = false;
+
     getInstruction(): MPI_RecvType {
         if (this.activeEditor === undefined) {
             throw new Error("Active editor not set.");
@@ -397,6 +410,15 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
         if (this.isLoop) {
             requestStr =
                 "MPI_Request " + this.request + "[" + this.loopCntStr + "];";
+            
+            let statusParam = this.blockingInst?.status || "Error";
+            
+            this.status = removeChars(statusParam, ['&', '*']);
+            this.useOldStatus = await confirmationDialog("Use old status variable: '" + this.status + "'?", "The status variable needs to be an array, if you use the status variable multiple times, this can result in errors.")
+            if(!this.useOldStatus) {
+                this.status = await inputDialog("What should the new status variable be named?:", "statusArr", "Choose a new variable name, that is unique in the current Domain.");
+                requestStr = "MPI_Status " + this.status + "[" + this.loopCntStr + "];\n" + requestStr;
+            }
         }
         return requestStr;
     }
@@ -414,7 +436,7 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
                 ", " +
                 this.request +
                 ", " +
-                this.blockingInst?.status +
+                this.status +
                 ");";
         }
         return waitStr;
@@ -456,6 +478,51 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
         }
         this.conflictVariableStr = [buf, this.blockingInst.status];
         return [buf, this.blockingInst.status];
+    }
+
+    async afterReplace(): Promise<void> {
+        if(this.activeEditor === undefined || !this.isLoop || !this.useOldStatus) {
+            return;
+        }
+
+        let lineTxt = "";
+        let currentline = this.pos;
+        let isInComment = false;
+        while(currentline.line < this.activeEditor.document.lineCount) {
+            let commentReturn = removeComments(this.activeEditor.document.lineAt(currentline).text, isInComment);
+            lineTxt = commentReturn.line;
+            isInComment = commentReturn.isInComment;
+
+            let index = lineTxt.indexOf("MPI_Irecv");
+            if(index !== -1) {
+                break;
+            }
+            currentline = currentline.translate(1);
+        }
+        
+        while(currentline.line >= 0) {
+            let commentReturn = removeComments(this.activeEditor.document.lineAt(currentline).text);
+            lineTxt = commentReturn.line;
+
+            let index = lineTxt.indexOf(this.status.trim());
+            if(index !== -1) {
+                let firstStatement = lineTxt.trim().split(" ")[0];
+                if(firstStatement.trim().substring(0, 10) === "MPI_Status") {
+                    break;
+                }
+            }
+            currentline = currentline.translate(-1);
+        }
+
+        if(currentline.line > (this.loopPos?.line || this.pos.line)) {
+            // TODO: Fix this
+        }
+        else {
+            let index = lineTxt.indexOf(this.status.trim());
+            await this.activeEditor.edit( (editBuilder) => {
+                editBuilder.insert(new Position(currentline.line, index + this.status.length),"["+this.loopCntStr+"]");
+            });
+        }
     }
 }
 
