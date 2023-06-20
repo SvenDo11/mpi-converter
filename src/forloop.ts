@@ -1,55 +1,56 @@
 import { ViewColumn, Position, Range, window } from "vscode";
 import { confirmationDialog } from "./dialogs";
-import { containsVariables, findDomain } from './util'; 
+import { containsVariables, findDomain, removeComments } from "./util";
 import { getForLoopHTML } from "./webviews";
 
-const separators = [';', '}'];
+const separators = [";", "}"];
 
-export async function checkForLoop(pos: Position)
-{
+export async function checkForLoop(pos: Position) {
     let activeEditor = window.activeTextEditor;
     if (activeEditor === undefined) {
-      return false;
+        return false;
     }
     let domain = findDomain(pos) || new Range(pos, pos.translate(1));
 
     let currentPos = domain.start;
     let isForLoop = false;
+    let isInComment = false;
     // Itterate over previous lines to find statement bevor current domain
-    while(true) {
-        let line = activeEditor.document.lineAt(currentPos)
-        if( line.isEmptyOrWhitespace ) {
+    while (currentPos.line >= 0) {
+        let line = activeEditor.document.lineAt(currentPos);
+        if (line.isEmptyOrWhitespace) {
             continue;
         }
-        if(containsVariables(line.text, ['for'])){
-            /*window.showInformationMessage("found this to be in a for loop", "What does this mean?").then(
-                selection => {
-                    const panel = window.createWebviewPanel(
-                        'forLoop',
-                        'For Loop',
-                        ViewColumn.Beside,
-                        {}
-                    );
-
-                    panel.webview.html = getForLoopHTML();
-                }
-            );*/
+        let commentReturn = removeComments(line.text, isInComment);
+        let lineTxt = commentReturn.line;
+        isInComment = commentReturn.isInComment;
+        if (containsVariables(lineTxt, ["for"])) {
             isForLoop = true;
             break;
         }
-        if( line.text.includes(';') || line.text.includes('}') ) {
+        if (lineTxt.includes(";") || lineTxt.includes("}")) {
             isForLoop = false;
-            break;
-        }
-        if(currentPos.line === 1) {
             break;
         }
         currentPos = currentPos.translate(-1);
     }
 
-    if(isForLoop){
-        if( await confirmationDialog("Is this mpi statement in a for loop, that can be unrolled?") ){
-            return currentPos;
+    if (isForLoop) {
+        if (
+            await confirmationDialog(
+                "Is this mpi statement in a for loop, that can be unrolled?"
+            )
+        ) {
+            let line = removeComments(
+                activeEditor.document.lineAt(currentPos).text
+            ).line;
+            let index = line.indexOf("for");
+            if (index === -1) {
+                index ==
+                    activeEditor.document.lineAt(currentPos)
+                        .firstNonWhitespaceCharacterIndex;
+            }
+            return new Position(currentPos.line, index);
         }
     }
     return false;

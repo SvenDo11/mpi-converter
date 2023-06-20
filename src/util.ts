@@ -79,7 +79,9 @@ export function findDomain(pos: Position) {
         let subdomaincnt = 0;
         let currentPos = pos;
         while (true) {
-            let line = activeEditor.document.lineAt(currentPos).text;
+            let line = removeComments(
+                activeEditor.document.lineAt(currentPos).text
+            ).line;
             let found = false;
             for (let i = 0; i < line.length; i++) {
                 let c = line.charAt(i);
@@ -205,6 +207,7 @@ export async function extendOverlapWindow(
     variableNames: Array<string>
 ): Promise<{ pos: Position; conflict: boolean }> {
     let activeEditor = window.activeTextEditor;
+
     if (activeEditor === undefined) {
         return { pos: pos, conflict: false };
     }
@@ -213,6 +216,7 @@ export async function extendOverlapWindow(
     let subdomainCnt = 0;
     let validPos = currentPos;
     let foundConflict = false;
+    let isInComment = false;
     while (currentPos.line < activeEditor.document.lineCount) {
         let line = activeEditor.document.lineAt(currentPos);
         if (line.isEmptyOrWhitespace) {
@@ -220,7 +224,9 @@ export async function extendOverlapWindow(
             continue;
         }
 
-        let lineTxt = removeComments(line.text);
+        let commentReturn = removeComments(line.text, isInComment);
+        isInComment = commentReturn.isInComment;
+        let lineTxt = commentReturn.line;
         if (subdomainCnt === 0) {
             validPos = new Position(
                 currentPos.line,
@@ -258,14 +264,16 @@ export async function extendOverlapWindow(
     }
 
     // find validPos
-    while (validPos > pos) {
+    // TODO: is in comment but reversed
+    isInComment = false;
+    while (validPos.line > pos.line) {
         let newPos = validPos.translate(-1);
         let line = activeEditor.document.lineAt(newPos);
         if (line.isEmptyOrWhitespace) {
             validPos = newPos;
             continue;
         }
-        let lineTxt = removeComments(line.text);
+        let lineTxt = removeComments(line.text).line;
         let lastChar = lineTxt.trim().charAt(lineTxt.trim().length - 1);
         if (lastChar === ";" || lastChar === "}") {
             validPos = new Position(
@@ -337,15 +345,23 @@ export function subDomainChangeInLine(line: string): number {
     return dif;
 }
 
-export function removeComments(line: string): string {
+export function removeComments(
+    line: string,
+    isInComment?: boolean
+): { line: string; isInComment: boolean } {
     enum States {
         noComment,
         oneSlash,
         doubleSlash,
         slashStar,
     }
+
+    if (isInComment === undefined) {
+        isInComment = false;
+    }
+
     let newLine = "";
-    let state = States.noComment;
+    let state = isInComment ? States.slashStar : States.noComment;
     for (let i = 0; i < line.length; i += 1) {
         let char = line[i];
         switch (state) {
@@ -381,5 +397,5 @@ export function removeComments(line: string): string {
                 break;
         }
     }
-    return newLine;
+    return { line: newLine, isInComment: state === States.slashStar };
 }

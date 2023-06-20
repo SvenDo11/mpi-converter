@@ -16,7 +16,9 @@
     "commands": [
       {
         "command": "mpiconv.convertToUnblocking",
-        "title": "Convert MPI statements"
+        "title": "Convert MPI statements",
+        "icon": "RunIcon.svg",
+        "shortTitle": "MPIconv"
       }
     ],
     "configuration": {
@@ -43,7 +45,7 @@
       "activitybar": [
         {
           "id": "mpi-converter",
-          "icon": "Icon.png",
+          "icon": "Icon.svg",
           "title": "MPI Converter"
         }
       ]
@@ -51,15 +53,20 @@
     "views": {
       "mpi-converter": [
         {
-          "id": "test",
+          "id": "mpiconv.webview-view",
           "name": "Modernise MPI"
         }
       ]
     },
-    "viewsWelcome": [{
-      "view": "mpiconv.mpi-converter.test",
-      "contents": "Run the mpi converter on the currently open file.\n[Run MPI Converter](command:convertToUnblocking)"
-    }]
+    "menus": {
+      "view/title": [
+        {
+          "command": "mpiconv.convertToUnblocking",
+          "group": "navigation",
+          "when": "view == mpiconv.webview-view"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

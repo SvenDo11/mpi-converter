@@ -22,9 +22,6 @@ import {
 import { checkForLoop } from "./forloop";
 import { error } from "console";
 
-// TODO: Fix MPI Statement in comment error for finding MPI_Send/ MPI_recv
-// TODO: Fix reference symbol for array buffer variable (Same for pointer)
-
 abstract class BlockingToUnblocking<MPI_Type> {
     activeEditor: TextEditor | undefined = undefined;
     codestr: string = "";
@@ -72,7 +69,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
             );
 
             if (conflict.conflict) {
-                window.showInformationMessage(
+                window.showErrorMessage(
                     "The blocking MPI instruction was found to be in a loop. \
                 But because of a conflict, the MPI_wait call cannot be outside the for loop. \
                 This severly impacts the possible performance gain from using unblocking instructions.\
@@ -92,11 +89,6 @@ abstract class BlockingToUnblocking<MPI_Type> {
             }
         }
 
-        let indentation = this.activeEditor.document
-            .lineAt(editorPos)
-            .text.slice(0, editorPos.character);
-        let newLnStr = "\n" + indentation;
-
         // TODO: This is bad. Make it better, pls
         let endSmt = this.codestr.indexOf(
             ";",
@@ -112,6 +104,14 @@ abstract class BlockingToUnblocking<MPI_Type> {
         let suffixStr = this.getSuffixStr();
 
         if (!this.isLoop) {
+            let indentation = this.activeEditor.document
+                .lineAt(editorPos)
+                .text.substring(
+                    0,
+                    this.activeEditor.document.lineAt(editorPos)
+                        .firstNonWhitespaceCharacterIndex
+                );
+            let newLnStr = "\n" + indentation;
             let endSmt = this.codestr.indexOf(
                 ";",
                 this.activeEditor.document.offsetAt(this.pos)
@@ -150,7 +150,11 @@ abstract class BlockingToUnblocking<MPI_Type> {
                 isForLoop instanceof Position ? isForLoop : editorPos;
             let indentation = this.activeEditor.document
                 .lineAt(prefixPos)
-                .text.slice(0, prefixPos.character);
+                .text.substring(
+                    0,
+                    this.activeEditor.document.lineAt(prefixPos)
+                        .firstNonWhitespaceCharacterIndex
+                );
             let newLnStr = "\n" + indentation;
 
             await this.activeEditor.edit((editBuilder) => {
@@ -164,8 +168,15 @@ abstract class BlockingToUnblocking<MPI_Type> {
                     await this.getConflictVariableStr()
                 )
             ).pos;
+            indentation = this.activeEditor.document
+                .lineAt(waitPos)
+                .text.substring(
+                    0,
+                    this.activeEditor.document.lineAt(waitPos)
+                        .firstNonWhitespaceCharacterIndex
+                );
             await this.activeEditor.edit((editBuilder) => {
-                editBuilder.insert(waitPos, suffixStr);
+                editBuilder.insert(waitPos, suffixStr + "\n" + indentation);
             });
         }
     }
@@ -202,7 +213,12 @@ abstract class BlockingToUnblocking<MPI_Type> {
         let iteratorpreview = "";
         if (loopParams.length === 3) {
             let lhs = loopParams[0].split("=")[0].split(" ");
-            iteratorpreview = lhs.length == 1 ? lhs[0] : lhs[1];
+            for (let i = lhs.length - 1; i >= 0; i -= 1) {
+                if (lhs[i] !== "") {
+                    iteratorpreview = lhs[i];
+                    break;
+                }
+            }
         }
 
         let iteratorString = await inputDialog(
@@ -225,10 +241,11 @@ abstract class BlockingToUnblocking<MPI_Type> {
         }
         let currentPos = pos;
         while (currentPos.line < this.activeEditor.document.lineCount) {
-            let line = this.activeEditor.document.lineAt(pos);
+            let line = this.activeEditor.document.lineAt(currentPos);
             if (line.text.indexOf(";") !== -1) {
-                return currentPos.translate(1);
+                return new Position(currentPos.line, line.text.indexOf(";"));
             }
+            currentPos = currentPos.translate(1);
         }
         return currentPos;
     }
@@ -451,19 +468,18 @@ export async function blockingToUnblockingMain() {
     for (let i = 0; i < 2; i += 1) {
         let searchString = searchStrings[i];
         let currentline = 0;
+        let isInComment = false;
         while (currentline < activeEditor.document.lineCount) {
             let line = activeEditor.document.lineAt(
                 new Position(currentline, 1)
             );
-            if (currentline === 47) {
-                console.log(line.text);
-            }
             if (line.isEmptyOrWhitespace) {
                 currentline += 1;
                 continue;
             }
-
-            let lineTxt = removeComments(line.text);
+            let commentReturn = removeComments(line.text, isInComment);
+            let lineTxt = commentReturn.line;
+            isInComment = commentReturn.isInComment;
             let index = lineTxt.indexOf(searchString);
             if (index === -1) {
                 currentline += 1;
