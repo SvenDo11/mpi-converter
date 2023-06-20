@@ -15,7 +15,6 @@ import { confirmationDialog } from "./dialogs";
 
 let operators = / |,|.|:|\(|\)|\{|\}|;|=|<|>|\/|\+|\-|\*|\[|\]/;
 let knownFunctions = ["for", "while", "if", "printf", "cout"];
-let conf = workspace.getConfiguration("mpiconv");
 
 export function sendToIsend(
     sendSmt: MPI_SendType,
@@ -213,7 +212,7 @@ export async function extendOverlapWindow(
     if (activeEditor === undefined) {
         return { pos: pos, conflict: false };
     }
-    let functionConfig = conf.get<string>('FunctionDataRace') || "ask";
+    let functionConfig = workspace.getConfiguration("mpiconv").get<string>('FunctionDataRace') || "ask";
 
     let currentPos = pos.translate(1); // pos?
     let subdomainCnt = 0;

@@ -138,7 +138,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
                   ).pos;
 
             await this.activeEditor.edit((editBuilder) => {
-                editBuilder.insert(waitPos, indentation + suffixStr + "\n");
+                editBuilder.insert(waitPos, suffixStr + "\n" + indentation );
             });
 
             await this.activeEditor.edit((editBuilder) => {
