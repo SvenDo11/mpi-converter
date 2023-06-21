@@ -8,7 +8,7 @@ import {
     ProcessExecutionOptions,
     TextEditorRevealType,
     Selection,
-    workspace
+    workspace,
 } from "vscode";
 import { BroadcastChannel } from "worker_threads";
 import { confirmationDialog } from "./dialogs";
@@ -212,7 +212,9 @@ export async function extendOverlapWindow(
     if (activeEditor === undefined) {
         return { pos: pos, conflict: false };
     }
-    let functionConfig = workspace.getConfiguration("mpiconv").get<string>('FunctionDataRace') || "ask";
+    let functionConfig =
+        workspace.getConfiguration("mpiconv").get<string>("FunctionDataRace") ||
+        "ask";
 
     let currentPos = pos.translate(1); // pos?
     let subdomainCnt = 0;
@@ -248,15 +250,23 @@ export async function extendOverlapWindow(
         // check for functionCalls
         let functions = containsFunctionCalls(lineTxt);
         let conflict = false;
-        if(functionConfig !== "never") {
+        if (functionConfig !== "never") {
             for (let i = 0; i < functions.length; i++) {
-                let location = new Position(currentPos.line, functions[i].location);
+                let location = new Position(
+                    currentPos.line,
+                    functions[i].location
+                );
                 if (knownFunctions.includes(functions[i].name.trim())) {
                     continue;
                 }
-                switch(functionConfig) {
+                switch (functionConfig) {
                     case "ask":
-                        if (await functionConflictDialog(functions[i].name, location)) {
+                        if (
+                            await functionConflictDialog(
+                                functions[i].name,
+                                location
+                            )
+                        ) {
                             conflict = true;
                             break;
                         }
@@ -396,7 +406,12 @@ export function removeComments(
                 }
                 break;
             case States.doubleSlash:
-                newLine += " ";
+                if (char === "\n") {
+                    state = States.noComment;
+                    newLine += char;
+                } else {
+                    newLine += " ";
+                }
                 break;
             case States.slashStar:
                 if (char === "/" && line[i - 1] === "*") {
@@ -411,11 +426,11 @@ export function removeComments(
     return { line: newLine, isInComment: state === States.slashStar };
 }
 
-export function removeChars(str: string, chars: string[]){
+export function removeChars(str: string, chars: string[]) {
     let out = "";
-    for(let i = 0; i < str.length; i += 1) {
+    for (let i = 0; i < str.length; i += 1) {
         let char = str[i];
-        if(!chars.includes(char)) {
+        if (!chars.includes(char)) {
             out += char;
         }
     }
