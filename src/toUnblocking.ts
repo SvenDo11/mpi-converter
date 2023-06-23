@@ -195,7 +195,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
         let cntString = await inputDialog(
             "Enter number of loop iterations:",
             cntPreview.trim(),
-            "You can enter a specific number, a variable name or a c++ expression to determine the loop iterations. Most of the time the correct statement is written in the for loop parameters."
+            "You can enter a specific number, a variable name or a c++ expression to determine the loop iterations. Most of the time the correct statement is written in the termination condition of the for loop parameters."
         );
         if (cntString === undefined) {
             window.showErrorMessage(
@@ -282,11 +282,13 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
     async getPrefixStr(): Promise<string> {
         this.status = await inputDialog(
             "What should the status variable be named?:",
-            "status"
+            "status",
+            "Make sure to use a unique variable name in the current domain. (Or just 'MPI_STATUS_IGNORE')"
         );
         this.request = await inputDialog(
             "What should the request variable be named?:",
-            "request"
+            "request",
+            "Make sure to use a unique variable name in the current domain."
         );
 
         let statusStr = "MPI_Status " + this.status + ";";
@@ -398,7 +400,8 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
     async getPrefixStr(): Promise<string> {
         this.request = await inputDialog(
             "What should the request variable be named?:",
-            "request"
+            "request",
+            "Make sure to use a unique variable name in the current Domain."
         );
         let requestStr = "MPI_Request " + this.request + ";";
 
@@ -411,8 +414,10 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
             this.status = removeChars(statusParam, ["&", "*"]);
             if (this.status !== "MPI_STATUS_IGNORE") {
                 this.useOldStatus = await confirmationDialog(
-                    "Use old status variable: '" + this.status + "'?",
-                    "The status variable needs to be an array, if you use the status variable multiple times, this can result in errors."
+                    "Use old status variable: '" +
+                        this.status +
+                        "'?" +
+                        "\nThe status variable needs to be an array. If you use the old status variable, it will be converted into an array. This can result in errors, if you used the status variable multiple times."
                 );
                 if (!this.useOldStatus) {
                     this.status = await inputDialog(
@@ -589,7 +594,8 @@ export async function blockingToUnblockingMain() {
             activeEditor.selection = new Selection(rep.start, rep.end);
             activeEditor.revealRange(rep, TextEditorRevealType.InCenter);
             let result = await confirmationDialog(
-                "Turn this statement into an unblocking one?"
+                "Turn this statement into an unblocking one?" +
+                    "\nTurning a blocking send or recv statement into an unblocking one, can provide performance benefits. For more information about unblocking MPI statements run " // TODO: missing information dialog
             );
 
             if (result) {

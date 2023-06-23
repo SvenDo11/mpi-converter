@@ -14,7 +14,19 @@ import { BroadcastChannel } from "worker_threads";
 import { confirmationDialog } from "./dialogs";
 
 let operators = / |,|.|:|\(|\)|\{|\}|;|=|<|>|\/|\+|\-|\*|\[|\]/;
-let knownFunctions = ["for", "while", "if", "printf", "cout"];
+let knownFunctions = [
+    "for",
+    "while",
+    "if",
+    "printf",
+    "cout",
+    "MPI_Send",
+    "MPI_Isend",
+    "MPI_Recv",
+    "MPI_Wait",
+    "MPI_Waitall",
+];
+let knownConflictFunctions = ["MPI_Finalize"];
 
 export function sendToIsend(
     sendSmt: MPI_SendType,
@@ -197,7 +209,10 @@ async function functionConflictDialog(
         TextEditorRevealType.InCenter
     );
     let result = await confirmationDialog(
-        "Does function '" + name + "' have a datarace with the buffer variable?"
+        "Does function '" +
+            name +
+            "' have a datarace with the buffer variable?" +
+            "\nThis is normaly the case, if the buffer for the send/recv statment is defined globaly, and is accessed by the function."
     );
 
     return result;
@@ -258,6 +273,10 @@ export async function extendOverlapWindow(
                 );
                 if (knownFunctions.includes(functions[i].name.trim())) {
                     continue;
+                }
+                if (knownConflictFunctions.includes(functions[i].name.trim())) {
+                    conflict = true;
+                    break;
                 }
                 switch (functionConfig) {
                     case "ask":
