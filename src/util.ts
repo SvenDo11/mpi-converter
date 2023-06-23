@@ -216,7 +216,7 @@ export async function extendOverlapWindow(
         workspace.getConfiguration("mpiconv").get<string>("FunctionDataRace") ||
         "ask";
 
-    let currentPos = pos.translate(1); // pos?
+    let currentPos = pos; // pos?
     let subdomainCnt = 0;
     let validPos = currentPos;
     let foundConflict = false;

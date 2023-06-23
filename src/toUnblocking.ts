@@ -70,7 +70,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
             this.loopPos = isForLoop as Position;
             // Check if a conflict is allready found in the loop:
             let conflict = await extendOverlapWindow(
-                this.getEndOfStatmentPos(editorPos),
+                this.getEndOfStatmentPos(editorPos).translate(1),
                 await this.getConflictVariableStr()
             );
 
@@ -119,14 +119,6 @@ abstract class BlockingToUnblocking<MPI_Type> {
                         .firstNonWhitespaceCharacterIndex
                 );
             let newLnStr = "\n" + indentation;
-            let endSmt = this.codestr.indexOf(
-                ";",
-                this.activeEditor.document.offsetAt(this.pos)
-            );
-            let range = new Range(
-                editorPos,
-                this.activeEditor.document.positionAt(endSmt + 1)
-            );
 
             let endPos = range.end.translate(1);
             let waitPos = foundWait
@@ -305,7 +297,11 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
             requestStr =
                 "MPI_Request " + this.request + "[" + this.loopCntStr + "];";
         }
-        return statusStr + "\n" + requestStr;
+        let returnStr =
+            this.status === "MPI_STATUS_IGNORE"
+                ? requestStr
+                : statusStr + "\n" + requestStr;
+        return returnStr;
     }
 
     getSuffixStr(): string {
@@ -413,23 +409,25 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
             let statusParam = this.blockingInst?.status || "Error";
 
             this.status = removeChars(statusParam, ["&", "*"]);
-            this.useOldStatus = await confirmationDialog(
-                "Use old status variable: '" + this.status + "'?",
-                "The status variable needs to be an array, if you use the status variable multiple times, this can result in errors."
-            );
-            if (!this.useOldStatus) {
-                this.status = await inputDialog(
-                    "What should the new status variable be named?:",
-                    "statusArr",
-                    "Choose a new variable name, that is unique in the current Domain."
+            if (this.status !== "MPI_STATUS_IGNORE") {
+                this.useOldStatus = await confirmationDialog(
+                    "Use old status variable: '" + this.status + "'?",
+                    "The status variable needs to be an array, if you use the status variable multiple times, this can result in errors."
                 );
-                requestStr =
-                    "MPI_Status " +
-                    this.status +
-                    "[" +
-                    this.loopCntStr +
-                    "];\n" +
-                    requestStr;
+                if (!this.useOldStatus) {
+                    this.status = await inputDialog(
+                        "What should the new status variable be named?:",
+                        "statusArr",
+                        "Choose a new variable name, that is unique in the current Domain."
+                    );
+                    requestStr =
+                        "MPI_Status " +
+                        this.status +
+                        "[" +
+                        this.loopCntStr +
+                        "];\n" +
+                        requestStr;
+                }
             }
         }
         return requestStr;
@@ -442,13 +440,17 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
             this.blockingInst?.status +
             ");";
         if (this.isLoop) {
+            let status =
+                this.status === "MPI_STATUS_IGNORE"
+                    ? "MPI_STATUSES_IGNORE"
+                    : this.status;
             waitStr =
                 "MPI_Waitall(" +
                 this.loopCntStr +
                 ", " +
                 this.request +
                 ", " +
-                this.status +
+                status +
                 ");";
         }
         return waitStr;
