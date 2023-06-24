@@ -19,7 +19,7 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
 
     1. Öffnen Sie die Windows PowerShell als Administrator.
 
-    ![](media/powershell_admin.png){width=30%}
+    ![](media/powershell_admin.png)
 
     2. Führen Sie den Befehl `wsl --install` aus.
     3. Warten Sie etwas, bis Sie nach einem Nutzernamen gefragt werden.
@@ -42,7 +42,7 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
     2. Klicken Sie in dem Extension Tab auf ...
     3. Wählen Sie _Aus VSIX installieren_ / _Install from VSIX_
 
-    ![](media/vsix.png){width = 30%}
+    ![](media/vsix.png)
 
     4. Wählen Sie in dem Fileselektor die bereitgestellte _mpiconv-0.0.X.vsix_ Datei aus.
 
@@ -58,7 +58,7 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
     2. Klicken Sie in dem Extension Tab auf ...
     3. Wählen Sie _Aus VSIX installieren_ / _Install from VSIX_
 
-    ![](media/vsix.png){width = 30%}
+    ![](media/vsix.png)
 
     4. Wählen Sie in dem Fileselektor die bereitgestellte _mpiconv-0.0.X.vsix_ Datei aus.
 
@@ -97,7 +97,7 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
 
 8. Sollte das Programm nicht direkt Kompilieren, oder das falsche Ergebnis ausrechnen, versuchen Sie die Fehler bitte manuell zu beheben.
 
-9. Wenn Sie alle Instruktionen ersetzt haben und das Programm das richtige Ergebnis ausgibt, oder wenn Sie es nicht schaffen, das Programm nach dem Anwenden des Plugins zum Laufen zu bringen, öffnen Sie bitte den Fragebogen und füllen ihn aus.
+9. Wenn Sie alle Instruktionen ersetzt haben und das Programm das richtige Ergebnis ausgibt, oder wenn Sie es nicht schaffen, das Programm nach dem Anwenden des Plugins zum Laufen zu bringen, öffnen Sie bitte den [Fragebogen](https://www.soscisurvey.de/MPIplugin2023/?act=759W41Lq0fAFPPOz0CzaujH6) und füllen ihn aus.
 
 Vielen Dank, dass Sie sich die Zeit genommen haben.
 Ihre Angaben und ihr Feedback tragen maßgeblich zu meiner Masterarbeit bei.

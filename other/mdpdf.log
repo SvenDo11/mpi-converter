@@ -1,0 +1,251 @@
+    INFO: 2023-06-24 14:47:45,462:               log.py:   20: Logging to /home/sven/Projects/mpi-converter/other/mdpdf.log
+   DEBUG: 2023-06-24 14:47:45,462:               cli.py:  103: Anleitung.md
+    INFO: 2023-06-24 14:47:45,462:         converter.py:   14: Anleitung.md
+   DEBUG: 2023-06-24 14:47:45,467:      pdf_renderer.py:  470: printSegment: Anleitung zur Nutzerstudie für die Masterarbeit 
+   DEBUG: 2023-06-24 14:47:45,468:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2023-06-24 14:47:45,468:      pdf_renderer.py:  470: printSegment: Ein IDE Plugin für
+   DEBUG: 2023-06-24 14:47:45,468:      pdf_renderer.py:  470: printSegment: Automatische MPI Code Modernisierung
+   DEBUG: 2023-06-24 14:47:45,468:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2023-06-24 14:47:45,468:      pdf_renderer.py:  470: printSegment: 1. Voraussetzungen
+   DEBUG: 2023-06-24 14:47:45,468:      pdf_renderer.py:  470: printSegment: Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
+   DEBUG: 2023-06-24 14:47:45,469:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2023-06-24 14:47:45,469:      pdf_renderer.py:  470: printSegment: Visual Studio Code
+   DEBUG: 2023-06-24 14:47:45,470:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2023-06-24 14:47:45,470:      pdf_renderer.py:  470: printSegment: Ein C++ Compiler, zum Beispiel 
+   DEBUG: 2023-06-24 14:47:45,470:      pdf_renderer.py:  470: printSegment: gcc
+   DEBUG: 2023-06-24 14:47:45,470:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2023-06-24 14:47:45,470:      pdf_renderer.py:  470: printSegment: Eine MPI Library, zum Beispiel 
+   DEBUG: 2023-06-24 14:47:45,470:      pdf_renderer.py:  470: printSegment: OpenMPI
+   DEBUG: 2023-06-24 14:47:45,470:      pdf_renderer.py:  470: printSegment: Installieren:
+   DEBUG: 2023-06-24 14:47:45,471:      pdf_renderer.py:  470: printSegment: Windows
+   DEBUG: 2023-06-24 14:47:45,471:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2023-06-24 14:47:45,471:      pdf_renderer.py:  470: printSegment: Laden Sie Visual Studio Code von 
+   DEBUG: 2023-06-24 14:47:45,471:      pdf_renderer.py:  470: printSegment: hier
+   DEBUG: 2023-06-24 14:47:45,471:      pdf_renderer.py:  470: printSegment:  herunter und installieren Sie es.
+   DEBUG: 2023-06-24 14:47:45,471:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2023-06-24 14:47:45,471:      pdf_renderer.py:  470: printSegment: Installieren Sie einen C++ Compiler und eine MPI Library. Wenn Sie bereits einen C++ Compiler
+   DEBUG: 2023-06-24 14:47:45,471:      pdf_renderer.py:  470: printSegment: mit MPI haben, machen Sie mit schritt 
+   DEBUG: 2023-06-24 14:47:45,471:      pdf_renderer.py:  470: printSegment: [
+   DEBUG: 2023-06-24 14:47:45,472:      pdf_renderer.py:  470: printSegment: 3
+   DEBUG: 2023-06-24 14:47:45,472:      pdf_renderer.py:  470: printSegment: ]
+   DEBUG: 2023-06-24 14:47:45,472:      pdf_renderer.py:  470: printSegment:  weiter.
+   DEBUG: 2023-06-24 14:47:45,472:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,472:      pdf_renderer.py:  470: printSegment: Ansonsten empfehlen wir, 
+   DEBUG: 2023-06-24 14:47:45,472:      pdf_renderer.py:  470: printSegment: Windows Subsystem
+   DEBUG: 2023-06-24 14:47:45,472:      pdf_renderer.py:  470: printSegment: for Linux
+   DEBUG: 2023-06-24 14:47:45,472:      pdf_renderer.py:  470: printSegment:  zu nutzen.
+   DEBUG: 2023-06-24 14:47:45,472:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,473:      pdf_renderer.py:  470: printSegment: Führen Sie dafür folgende Schritte aus:
+   DEBUG: 2023-06-24 14:47:45,473:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2023-06-24 14:47:45,473:      pdf_renderer.py:  470: printSegment: Öffnen Sie die Windows PowerShell als Administrator.
+   DEBUG: 2023-06-24 14:47:45,473:      pdf_renderer.py:  235: /home/sven/Projects/mpi-converter/other/media/powershell_admin.png, 783, 642
+   DEBUG: 2023-06-24 14:47:45,488:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2023-06-24 14:47:45,489:      pdf_renderer.py:  470: printSegment: Führen Sie den Befehl 
+   DEBUG: 2023-06-24 14:47:45,489:      pdf_renderer.py:  470: printSegment: wsl --install
+   DEBUG: 2023-06-24 14:47:45,490:      pdf_renderer.py:  470: printSegment:  aus.
+   DEBUG: 2023-06-24 14:47:45,490:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2023-06-24 14:47:45,490:      pdf_renderer.py:  470: printSegment: Warten Sie etwas, bis Sie nach einem Nutzernamen gefragt werden.
+   DEBUG: 2023-06-24 14:47:45,490:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2023-06-24 14:47:45,491:      pdf_renderer.py:  470: printSegment: Geben Sie ein Nutzernamen und ein Passwort an. Diese dienen als Account für das
+   DEBUG: 2023-06-24 14:47:45,491:      pdf_renderer.py:  470: printSegment: Linux Subsystem.
+   DEBUG: 2023-06-24 14:47:45,491:      pdf_renderer.py:  470: printSegment:  5 
+   DEBUG: 2023-06-24 14:47:45,491:      pdf_renderer.py:  470: printSegment: Rebooten Sie ihren Computer
+   DEBUG: 2023-06-24 14:47:45,491:      pdf_renderer.py:  470: printSegment:  6 
+   DEBUG: 2023-06-24 14:47:45,491:      pdf_renderer.py:  470: printSegment: Ein Fenster mit dem Titel Ubuntu sollte sich nach dem Login automatisch öffnen
+   DEBUG: 2023-06-24 14:47:45,491:      pdf_renderer.py:  470: printSegment: und den Installationsprozess fortsetzen.
+   DEBUG: 2023-06-24 14:47:45,491:      pdf_renderer.py:  470: printSegment:  7 
+   DEBUG: 2023-06-24 14:47:45,491:      pdf_renderer.py:  470: printSegment: Nachdem Ubuntu fertig installiert ist, kann mit den folgenden Befehlen gcc und
+   DEBUG: 2023-06-24 14:47:45,492:      pdf_renderer.py:  470: printSegment: openMPI installiert werden.
+   DEBUG: 2023-06-24 14:47:45,492:      pdf_renderer.py:  470: printSegment: sudo apt-get update
+   DEBUG: 2023-06-24 14:47:45,492:      pdf_renderer.py:  470: printSegment: sudo apt-get install gcc make openmpi-bin
+   DEBUG: 2023-06-24 14:47:45,492:      pdf_renderer.py:  470: printSegment:  8 
+   DEBUG: 2023-06-24 14:47:45,492:      pdf_renderer.py:  470: printSegment: Bestätigen Sie mit 
+   DEBUG: 2023-06-24 14:47:45,492:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2023-06-24 14:47:45,492:      pdf_renderer.py:  470: printSegment: y
+   DEBUG: 2023-06-24 14:47:45,492:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2023-06-24 14:47:45,492:      pdf_renderer.py:  470: printSegment:  9 
+   DEBUG: 2023-06-24 14:47:45,493:      pdf_renderer.py:  470: printSegment: Sie haben nun ein Ubuntu terminal und können dort wie mit einem Linux System
+   DEBUG: 2023-06-24 14:47:45,493:      pdf_renderer.py:  470: printSegment: arbeiten. Das System kann auch durch die PowerShell mit dem Befehl 
+   DEBUG: 2023-06-24 14:47:45,493:      pdf_renderer.py:  470: printSegment: wsl
+   DEBUG: 2023-06-24 14:47:45,493:      pdf_renderer.py:  470: printSegment: 
+   DEBUG: 2023-06-24 14:47:45,493:      pdf_renderer.py:  470: printSegment: aufgerufen werden. Dies können sie im Visual Studio Code Terminal machen, um
+   DEBUG: 2023-06-24 14:47:45,493:      pdf_renderer.py:  470: printSegment: dort dann die 
+   DEBUG: 2023-06-24 14:47:45,493:      pdf_renderer.py:  470: printSegment: make
+   DEBUG: 2023-06-24 14:47:45,493:      pdf_renderer.py:  470: printSegment:  Befehle in der Durchführung auszuführen.
+   DEBUG: 2023-06-24 14:47:45,494:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,494:      pdf_renderer.py:  470: printSegment: Mit 
+   DEBUG: 2023-06-24 14:47:45,494:      pdf_renderer.py:  470: printSegment: exit
+   DEBUG: 2023-06-24 14:47:45,494:      pdf_renderer.py:  470: printSegment:  wechseln
+   DEBUG: 2023-06-24 14:47:45,494:      pdf_renderer.py:  470: printSegment: Sie wieder in die gewohnte PowerShell zurück.
+   DEBUG: 2023-06-24 14:47:45,494:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2023-06-24 14:47:45,494:      pdf_renderer.py:  470: printSegment: Installieren Sie das Plugin in Visual Studio Code:
+   DEBUG: 2023-06-24 14:47:45,494:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2023-06-24 14:47:45,494:      pdf_renderer.py:  470: printSegment: Öffnen Sie Visual Studio Code und navigieren Sie in der Aktivitätenleiste auf der
+   DEBUG: 2023-06-24 14:47:45,495:      pdf_renderer.py:  470: printSegment: linken Seite zu den Erweiterungen (eng. Extensions).
+   DEBUG: 2023-06-24 14:47:45,495:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2023-06-24 14:47:45,495:      pdf_renderer.py:  470: printSegment: Klicken Sie in dem Extension Tab auf ...
+   DEBUG: 2023-06-24 14:47:45,495:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2023-06-24 14:47:45,495:      pdf_renderer.py:  470: printSegment: Wählen Sie 
+   DEBUG: 2023-06-24 14:47:45,496:      pdf_renderer.py:  470: printSegment: Aus VSIX installieren
+   DEBUG: 2023-06-24 14:47:45,496:      pdf_renderer.py:  470: printSegment:  / 
+   DEBUG: 2023-06-24 14:47:45,497:      pdf_renderer.py:  470: printSegment: Install from VSIX
+   DEBUG: 2023-06-24 14:47:45,497:      pdf_renderer.py:  235: /home/sven/Projects/mpi-converter/other/media/vsix.png, 574, 317
+   DEBUG: 2023-06-24 14:47:45,501:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2023-06-24 14:47:45,501:      pdf_renderer.py:  470: printSegment: Wählen Sie in dem Fileselektor die bereitgestellte 
+   DEBUG: 2023-06-24 14:47:45,501:      pdf_renderer.py:  470: printSegment: mpiconv-0.0.X.vsix
+   DEBUG: 2023-06-24 14:47:45,501:      pdf_renderer.py:  470: printSegment:  Datei aus.
+   DEBUG: 2023-06-24 14:47:45,502:      pdf_renderer.py:  470: printSegment: Linux
+   DEBUG: 2023-06-24 14:47:45,502:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2023-06-24 14:47:45,502:      pdf_renderer.py:  470: printSegment: Laden Sie Visual Studio Code von 
+   DEBUG: 2023-06-24 14:47:45,502:      pdf_renderer.py:  470: printSegment: hier
+   DEBUG: 2023-06-24 14:47:45,502:      pdf_renderer.py:  470: printSegment:  herunter und installieren Sie es. Alternativ kann Visual
+   DEBUG: 2023-06-24 14:47:45,502:      pdf_renderer.py:  470: printSegment: Studio Code auch von manchen package managern installiert werden.
+   DEBUG: 2023-06-24 14:47:45,502:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2023-06-24 14:47:45,503:      pdf_renderer.py:  470: printSegment: Wenn Sie noch keinen C++ Kompiler, MPI Library oder Make installiert haben, nutzen Sie Ihren
+   DEBUG: 2023-06-24 14:47:45,503:      pdf_renderer.py:  470: printSegment: package manager, um 
+   DEBUG: 2023-06-24 14:47:45,503:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2023-06-24 14:47:45,503:      pdf_renderer.py:  470: printSegment: gcc
+   DEBUG: 2023-06-24 14:47:45,503:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2023-06-24 14:47:45,503:      pdf_renderer.py:  470: printSegment: , 
+   DEBUG: 2023-06-24 14:47:45,503:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2023-06-24 14:47:45,503:      pdf_renderer.py:  470: printSegment: make
+   DEBUG: 2023-06-24 14:47:45,503:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2023-06-24 14:47:45,504:      pdf_renderer.py:  470: printSegment:  und 
+   DEBUG: 2023-06-24 14:47:45,504:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2023-06-24 14:47:45,504:      pdf_renderer.py:  470: printSegment: openmpi
+   DEBUG: 2023-06-24 14:47:45,504:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2023-06-24 14:47:45,504:      pdf_renderer.py:  470: printSegment:  zu installieren.
+   DEBUG: 2023-06-24 14:47:45,504:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2023-06-24 14:47:45,504:      pdf_renderer.py:  470: printSegment: Ubuntu/Debian: 
+   DEBUG: 2023-06-24 14:47:45,504:      pdf_renderer.py:  470: printSegment: sudo apt-get install gcc make openmpi-bin
+   DEBUG: 2023-06-24 14:47:45,505:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2023-06-24 14:47:45,505:      pdf_renderer.py:  470: printSegment: Arch: 
+   DEBUG: 2023-06-24 14:47:45,505:      pdf_renderer.py:  470: printSegment: sudo pacman -S gcc make openmpi
+   DEBUG: 2023-06-24 14:47:45,505:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2023-06-24 14:47:45,505:      pdf_renderer.py:  470: printSegment: Installieren Sie das Plugin in Visual Studio Code:
+   DEBUG: 2023-06-24 14:47:45,505:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2023-06-24 14:47:45,505:      pdf_renderer.py:  470: printSegment: Öffnen Sie Visual Studio Code und navigieren Sie in der Aktivitätenleiste auf der
+   DEBUG: 2023-06-24 14:47:45,506:      pdf_renderer.py:  470: printSegment: linken Seite zu den 
+   DEBUG: 2023-06-24 14:47:45,506:      pdf_renderer.py:  470: printSegment: Erweiterungen
+   DEBUG: 2023-06-24 14:47:45,506:      pdf_renderer.py:  470: printSegment:  (eng. 
+   DEBUG: 2023-06-24 14:47:45,506:      pdf_renderer.py:  470: printSegment: Extensions
+   DEBUG: 2023-06-24 14:47:45,506:      pdf_renderer.py:  470: printSegment: ).
+   DEBUG: 2023-06-24 14:47:45,506:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2023-06-24 14:47:45,506:      pdf_renderer.py:  470: printSegment: Klicken Sie in dem Extension Tab auf ...
+   DEBUG: 2023-06-24 14:47:45,506:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2023-06-24 14:47:45,506:      pdf_renderer.py:  470: printSegment: Wählen Sie 
+   DEBUG: 2023-06-24 14:47:45,507:      pdf_renderer.py:  470: printSegment: Aus VSIX installieren
+   DEBUG: 2023-06-24 14:47:45,507:      pdf_renderer.py:  470: printSegment:  / 
+   DEBUG: 2023-06-24 14:47:45,507:      pdf_renderer.py:  470: printSegment: Install from VSIX
+   DEBUG: 2023-06-24 14:47:45,507:      pdf_renderer.py:  235: /home/sven/Projects/mpi-converter/other/media/vsix.png, 574, 317
+   DEBUG: 2023-06-24 14:47:45,507:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2023-06-24 14:47:45,508:      pdf_renderer.py:  470: printSegment: Wählen Sie in dem Fileselektor die bereitgestellte 
+   DEBUG: 2023-06-24 14:47:45,508:      pdf_renderer.py:  470: printSegment: mpiconv-0.0.X.vsix
+   DEBUG: 2023-06-24 14:47:45,508:      pdf_renderer.py:  470: printSegment:  Datei aus.
+   DEBUG: 2023-06-24 14:47:45,508:      pdf_renderer.py:  470: printSegment: 2. Durchführung
+   DEBUG: 2023-06-24 14:47:45,508:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2023-06-24 14:47:45,509:      pdf_renderer.py:  470: printSegment: Öffnen Sie den bereitgestellten Ordner 
+   DEBUG: 2023-06-24 14:47:45,509:      pdf_renderer.py:  470: printSegment: exercise1
+   DEBUG: 2023-06-24 14:47:45,509:      pdf_renderer.py:  470: printSegment:  in Visual Studio Code.
+   DEBUG: 2023-06-24 14:47:45,509:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2023-06-24 14:47:45,509:      pdf_renderer.py:  470: printSegment: Öffnen Sie die Datei 
+   DEBUG: 2023-06-24 14:47:45,509:      pdf_renderer.py:  470: printSegment: exercise1.cpp
+   DEBUG: 2023-06-24 14:47:45,509:      pdf_renderer.py:  470: printSegment: .
+   DEBUG: 2023-06-24 14:47:45,509:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2023-06-24 14:47:45,509:      pdf_renderer.py:  470: printSegment: Machen Sie sich etwas mit dem Code vertraut. Das Programm wendet die Funktion 
+   DEBUG: 2023-06-24 14:47:45,510:      pdf_renderer.py:  470: printSegment: function
+   DEBUG: 2023-06-24 14:47:45,510:      pdf_renderer.py:  470: printSegment:  auf
+   DEBUG: 2023-06-24 14:47:45,510:      pdf_renderer.py:  470: printSegment: jedes Element eines Arrays an und berechnet dann die Summe aller Elemente.
+   DEBUG: 2023-06-24 14:47:45,510:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,510:      pdf_renderer.py:  470: printSegment: Dafür wird einer der
+   DEBUG: 2023-06-24 14:47:45,510:      pdf_renderer.py:  470: printSegment: Prozesse als Master und die anderen als Worker benutzt.
+   DEBUG: 2023-06-24 14:47:45,510:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,510:      pdf_renderer.py:  470: printSegment: Der Master generiert zunächst ein Array
+   DEBUG: 2023-06-24 14:47:45,511:      pdf_renderer.py:  470: printSegment: und ruft dann die Funktion 
+   DEBUG: 2023-06-24 14:47:45,511:      pdf_renderer.py:  470: printSegment: master
+   DEBUG: 2023-06-24 14:47:45,511:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2023-06-24 14:47:45,511:      pdf_renderer.py:  470: printSegment: work
+   DEBUG: 2023-06-24 14:47:45,511:      pdf_renderer.py:  470: printSegment:  auf.
+   DEBUG: 2023-06-24 14:47:45,511:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,511:      pdf_renderer.py:  470: printSegment: Dort verteilt er das Array gleichmäßig auf die Worker
+   DEBUG: 2023-06-24 14:47:45,511:      pdf_renderer.py:  470: printSegment: mit 
+   DEBUG: 2023-06-24 14:47:45,511:      pdf_renderer.py:  470: printSegment: MPI
+   DEBUG: 2023-06-24 14:47:45,512:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2023-06-24 14:47:45,512:      pdf_renderer.py:  470: printSegment: Send
+   DEBUG: 2023-06-24 14:47:45,512:      pdf_renderer.py:  470: printSegment: .
+   DEBUG: 2023-06-24 14:47:45,512:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,512:      pdf_renderer.py:  470: printSegment: Dann empfängt er die Subergebnisse mit 
+   DEBUG: 2023-06-24 14:47:45,512:      pdf_renderer.py:  470: printSegment: MPI
+   DEBUG: 2023-06-24 14:47:45,512:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2023-06-24 14:47:45,512:      pdf_renderer.py:  470: printSegment: Recv
+   DEBUG: 2023-06-24 14:47:45,512:      pdf_renderer.py:  470: printSegment: .
+   DEBUG: 2023-06-24 14:47:45,512:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,513:      pdf_renderer.py:  470: printSegment: Zum Schluss berechnet er noch
+   DEBUG: 2023-06-24 14:47:45,513:      pdf_renderer.py:  470: printSegment: den Rest des Arrays und summiert alle Subergebnisse auf.
+   DEBUG: 2023-06-24 14:47:45,513:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,513:      pdf_renderer.py:  470: printSegment: Die Worker rufen direkt die Funktion 
+   DEBUG: 2023-06-24 14:47:45,513:      pdf_renderer.py:  470: printSegment: worker
+   DEBUG: 2023-06-24 14:47:45,513:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2023-06-24 14:47:45,513:      pdf_renderer.py:  470: printSegment: work
+   DEBUG: 2023-06-24 14:47:45,513:      pdf_renderer.py:  470: printSegment:  auf.
+   DEBUG: 2023-06-24 14:47:45,513:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,513:      pdf_renderer.py:  470: printSegment: Dort empfangen Sie ihren Teil des Arrays und berechnen ihr Subergebnis.
+   DEBUG: 2023-06-24 14:47:45,514:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,514:      pdf_renderer.py:  470: printSegment: Sie
+   DEBUG: 2023-06-24 14:47:45,514:      pdf_renderer.py:  470: printSegment: geben ihre Subergebnisse an den Master zurück und sind fertig.
+   DEBUG: 2023-06-24 14:47:45,514:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,514:      pdf_renderer.py:  470: printSegment: Das verteilte Ergebnis wird dann
+   DEBUG: 2023-06-24 14:47:45,514:      pdf_renderer.py:  470: printSegment: noch mit der Funktion 
+   DEBUG: 2023-06-24 14:47:45,514:      pdf_renderer.py:  470: printSegment: verfiy
+   DEBUG: 2023-06-24 14:47:45,514:      pdf_renderer.py:  470: printSegment:  geprüft.
+   DEBUG: 2023-06-24 14:47:45,514:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,515:      pdf_renderer.py:  470: printSegment: Ob das Ergebnis richtig ist, oder nicht wird auf der
+   DEBUG: 2023-06-24 14:47:45,515:      pdf_renderer.py:  470: printSegment: Kommandozeile ausgegeben.
+   DEBUG: 2023-06-24 14:47:45,515:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2023-06-24 14:47:45,515:      pdf_renderer.py:  470: printSegment: Testen Sie das Programm, indem Sie folgende befehle im Terminal eingeben:
+   DEBUG: 2023-06-24 14:47:45,515:      pdf_renderer.py:  470: printSegment: make all
+   DEBUG: 2023-06-24 14:47:45,515:      pdf_renderer.py:  470: printSegment: make test
+   DEBUG: 2023-06-24 14:47:45,516:      pdf_renderer.py:  470: printSegment:  5 
+   DEBUG: 2023-06-24 14:47:45,516:      pdf_renderer.py:  470: printSegment: Wenden Sie nun das Plugin an, indem Sie entweder links auf das MPI Symbol klicken und dann den
+   DEBUG: 2023-06-24 14:47:45,516:      pdf_renderer.py:  470: printSegment: grünen Pfeil anklicken, oder mit der Tastenkombination 
+   DEBUG: 2023-06-24 14:47:45,516:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2023-06-24 14:47:45,516:      pdf_renderer.py:  470: printSegment: ctr
+   DEBUG: 2023-06-24 14:47:45,516:      pdf_renderer.py:  470: printSegment:  + 
+   DEBUG: 2023-06-24 14:47:45,516:      pdf_renderer.py:  470: printSegment: shift
+   DEBUG: 2023-06-24 14:47:45,516:      pdf_renderer.py:  470: printSegment:  + 
+   DEBUG: 2023-06-24 14:47:45,517:      pdf_renderer.py:  470: printSegment: p
+   DEBUG: 2023-06-24 14:47:45,517:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2023-06-24 14:47:45,517:      pdf_renderer.py:  470: printSegment:  das Ausführfenster öffnen
+   DEBUG: 2023-06-24 14:47:45,517:      pdf_renderer.py:  470: printSegment: und 
+   DEBUG: 2023-06-24 14:47:45,517:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2023-06-24 14:47:45,517:      pdf_renderer.py:  470: printSegment: Convert MPI Statements
+   DEBUG: 2023-06-24 14:47:45,517:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2023-06-24 14:47:45,517:      pdf_renderer.py:  470: printSegment:  ausführen.
+   DEBUG: 2023-06-24 14:47:45,517:      pdf_renderer.py:  235: /home/sven/Projects/mpi-converter/other/media/run_plugin.png, 400, 463
+   DEBUG: 2023-06-24 14:47:45,522:      pdf_renderer.py:  470: printSegment:  6 
+   DEBUG: 2023-06-24 14:47:45,522:      pdf_renderer.py:  470: printSegment: Das Plugin wird ihnen nun eine Reihe an Fragen mit dem Dialogfenster stellen. Versuchen Sie jede
+   DEBUG: 2023-06-24 14:47:45,522:      pdf_renderer.py:  470: printSegment: der 4 MPI send/recv Instruktionen mit dem Plugin zu ersetzen.
+   DEBUG: 2023-06-24 14:47:45,522:      pdf_renderer.py:  470: printSegment:  7 
+   DEBUG: 2023-06-24 14:47:45,522:      pdf_renderer.py:  470: printSegment: Testen Sie das Resultat mit den Befehlen:
+   DEBUG: 2023-06-24 14:47:45,523:      pdf_renderer.py:  470: printSegment: make all
+   DEBUG: 2023-06-24 14:47:45,523:      pdf_renderer.py:  470: printSegment: make test
+   DEBUG: 2023-06-24 14:47:45,523:      pdf_renderer.py:  470: printSegment:  8 
+   DEBUG: 2023-06-24 14:47:45,523:      pdf_renderer.py:  470: printSegment: Sollte das Programm nicht direkt Kompilieren, oder das falsche Ergebnis ausrechnen, versuchen Sie
+   DEBUG: 2023-06-24 14:47:45,523:      pdf_renderer.py:  470: printSegment: die Fehler bitte manuell zu beheben.
+   DEBUG: 2023-06-24 14:47:45,523:      pdf_renderer.py:  470: printSegment:  9 
+   DEBUG: 2023-06-24 14:47:45,523:      pdf_renderer.py:  470: printSegment: Wenn Sie alle Instruktionen ersetzt haben und das Programm das richtige Ergebnis ausgibt, oder
+   DEBUG: 2023-06-24 14:47:45,524:      pdf_renderer.py:  470: printSegment: wenn Sie es nicht schaffen, das Programm nach dem Anwenden des Plugins zum Laufen zu bringen,
+   DEBUG: 2023-06-24 14:47:45,524:      pdf_renderer.py:  470: printSegment: öffnen Sie bitte den 
+   DEBUG: 2023-06-24 14:47:45,524:      pdf_renderer.py:  470: printSegment: Fragebogen
+   DEBUG: 2023-06-24 14:47:45,524:      pdf_renderer.py:  470: printSegment:  und füllen ihn aus.
+   DEBUG: 2023-06-24 14:47:45,524:      pdf_renderer.py:  470: printSegment: Vielen Dank, dass Sie sich die Zeit genommen haben.
+   DEBUG: 2023-06-24 14:47:45,524:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2023-06-24 14:47:45,524:      pdf_renderer.py:  470: printSegment: Ihre Angaben und ihr Feedback tragen maßgeblich zu meiner
+   DEBUG: 2023-06-24 14:47:45,524:      pdf_renderer.py:  470: printSegment: Masterarbeit bei.
+   DEBUG: 2023-06-24 14:47:45,525:      pdf_renderer.py:  470: printSegment: Bei Fragen oder Problemen wenden Sie sich gerne an mich: sven.donnerhak@stud.tu-darmstadt.de
+   DEBUG: 2023-06-24 14:47:45,525:      pdf_renderer.py:   53: 0, [1, 'Anleitung zur Nutzerstudie für die Masterarbeit ', 1, 87.2]
+   DEBUG: 2023-06-24 14:47:45,525:      pdf_renderer.py:   53: 1, [2, '1. Voraussetzungen', 1, 125.20000000000002]
+   DEBUG: 2023-06-24 14:47:45,525:      pdf_renderer.py:   53: 2, [3, 'Installieren:', 1, 224.40000000000003]
+   DEBUG: 2023-06-24 14:47:45,525:      pdf_renderer.py:   53: 3, [4, 'Windows', 1, 252.80000000000007]
+   DEBUG: 2023-06-24 14:47:45,525:      pdf_renderer.py:   53: 4, [4, 'Linux', 3, 428.4599303135888]
+   DEBUG: 2023-06-24 14:47:45,525:      pdf_renderer.py:   53: 5, [2, '2. Durchführung', 4, 387.2599303135888]
