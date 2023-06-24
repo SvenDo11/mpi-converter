@@ -70,7 +70,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
             this.loopPos = isForLoop as Position;
             // Check if a conflict is allready found in the loop:
             let conflict = await extendOverlapWindow(
-                this.getEndOfStatmentPos(editorPos),
+                this.getEndOfStatmentPos(editorPos).translate(1),
                 await this.getConflictVariableStr()
             );
 
@@ -87,11 +87,12 @@ abstract class BlockingToUnblocking<MPI_Type> {
                 foundWait = true;
                 foundWaitPos = conflict.pos;
             } else {
-                this.loopStr = removeComments(this.activeEditor.document.lineAt(
-                    isForLoop as Position
-                ).text).line;
-                this.loopCntStr = await this.getLoopIterationCount();
+                this.loopStr = removeComments(
+                    this.activeEditor.document.lineAt(isForLoop as Position)
+                        .text
+                ).line;
                 this.loopIterator = await this.getLoopIterator();
+                this.loopCntStr = await this.getLoopIterationCount();
             }
         }
 
@@ -118,14 +119,6 @@ abstract class BlockingToUnblocking<MPI_Type> {
                         .firstNonWhitespaceCharacterIndex
                 );
             let newLnStr = "\n" + indentation;
-            let endSmt = this.codestr.indexOf(
-                ";",
-                this.activeEditor.document.offsetAt(this.pos)
-            );
-            let range = new Range(
-                editorPos,
-                this.activeEditor.document.positionAt(endSmt + 1)
-            );
 
             let endPos = range.end.translate(1);
             let waitPos = foundWait
@@ -138,7 +131,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
                   ).pos;
 
             await this.activeEditor.edit((editBuilder) => {
-                editBuilder.insert(waitPos, suffixStr + "\n" + indentation );
+                editBuilder.insert(waitPos, suffixStr + "\n" + indentation);
             });
 
             await this.activeEditor.edit((editBuilder) => {
@@ -194,17 +187,15 @@ abstract class BlockingToUnblocking<MPI_Type> {
         if (loopParams.length === 3) {
             let comp = loopParams[1].split(/<|>|==|!=|<=|>=|<=>/);
             if (comp.length === 2) {
-                let lhs = loopParams[0].split("=")[0].split(" ");
-                let iterator = lhs.length == 1 ? lhs[0] : lhs[1];
-                cntPreview = containsVariables(comp[0], [iterator])
+                cntPreview = containsVariables(comp[0], [this.loopIterator])
                     ? comp[1]
                     : comp[0];
             }
         }
         let cntString = await inputDialog(
             "Enter number of loop iterations:",
-            cntPreview,
-            "You can enter a specific number, a variable name or a c++ expression to determine the loop iterations. Most of the time the correct statement is written in the for loop parameters."
+            cntPreview.trim(),
+            "You can enter a specific number, a variable name or a c++ expression to determine the loop iterations. Most of the time the correct statement is written in the termination condition of the for loop parameters."
         );
         if (cntString === undefined) {
             window.showErrorMessage(
@@ -230,7 +221,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
 
         let iteratorString = await inputDialog(
             "Enter loop iterator:",
-            iteratorpreview,
+            iteratorpreview.trim(),
             "You need to provide a iterator for the request and status variables of the MPI unblocking operation. In most cases this is the for loop iterator."
         );
         if (iteratorString === undefined) {
@@ -266,7 +257,7 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
             throw new Error("activeEditor was not set.");
         }
         let params = extractParams(
-            this.codestr,
+            removeComments(this.codestr).line,
             this.activeEditor.document.offsetAt(this.pos)
         );
 
@@ -291,11 +282,13 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
     async getPrefixStr(): Promise<string> {
         this.status = await inputDialog(
             "What should the status variable be named?:",
-            "status"
+            "status",
+            "Make sure to use a unique variable name in the current domain. (Or just 'MPI_STATUS_IGNORE')"
         );
         this.request = await inputDialog(
             "What should the request variable be named?:",
-            "request"
+            "request",
+            "Make sure to use a unique variable name in the current domain."
         );
 
         let statusStr = "MPI_Status " + this.status + ";";
@@ -306,7 +299,11 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
             requestStr =
                 "MPI_Request " + this.request + "[" + this.loopCntStr + "];";
         }
-        return statusStr + "\n" + requestStr;
+        let returnStr =
+            this.status === "MPI_STATUS_IGNORE"
+                ? requestStr
+                : statusStr + "\n" + requestStr;
+        return returnStr;
     }
 
     getSuffixStr(): string {
@@ -377,7 +374,7 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
             throw new Error("Active editor not set.");
         }
         let params = extractParams(
-            this.codestr,
+            removeComments(this.codestr).line,
             this.activeEditor.document.offsetAt(this.pos)
         );
 
@@ -403,21 +400,39 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
     async getPrefixStr(): Promise<string> {
         this.request = await inputDialog(
             "What should the request variable be named?:",
-            "request"
+            "request",
+            "Make sure to use a unique variable name in the current Domain."
         );
         let requestStr = "MPI_Request " + this.request + ";";
 
         if (this.isLoop) {
             requestStr =
                 "MPI_Request " + this.request + "[" + this.loopCntStr + "];";
-            
+
             let statusParam = this.blockingInst?.status || "Error";
-            
-            this.status = removeChars(statusParam, ['&', '*']);
-            this.useOldStatus = await confirmationDialog("Use old status variable: '" + this.status + "'?", "The status variable needs to be an array, if you use the status variable multiple times, this can result in errors.")
-            if(!this.useOldStatus) {
-                this.status = await inputDialog("What should the new status variable be named?:", "statusArr", "Choose a new variable name, that is unique in the current Domain.");
-                requestStr = "MPI_Status " + this.status + "[" + this.loopCntStr + "];\n" + requestStr;
+
+            this.status = removeChars(statusParam, ["&", "*"]);
+            if (this.status !== "MPI_STATUS_IGNORE") {
+                this.useOldStatus = await confirmationDialog(
+                    "Use old status variable: '" +
+                        this.status +
+                        "'?" +
+                        "\nThe status variable needs to be an array. If you use the old status variable, it will be converted into an array. This can result in errors, if you used the status variable multiple times."
+                );
+                if (!this.useOldStatus) {
+                    this.status = await inputDialog(
+                        "What should the new status variable be named?:",
+                        "statusArr",
+                        "Choose a new variable name, that is unique in the current Domain."
+                    );
+                    requestStr =
+                        "MPI_Status " +
+                        this.status +
+                        "[" +
+                        this.loopCntStr +
+                        "];\n" +
+                        requestStr;
+                }
             }
         }
         return requestStr;
@@ -430,13 +445,17 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
             this.blockingInst?.status +
             ");";
         if (this.isLoop) {
+            let status =
+                this.status === "MPI_STATUS_IGNORE"
+                    ? "MPI_STATUSES_IGNORE"
+                    : this.status;
             waitStr =
                 "MPI_Waitall(" +
                 this.loopCntStr +
                 ", " +
                 this.request +
                 ", " +
-                this.status +
+                status +
                 ");";
         }
         return waitStr;
@@ -481,46 +500,57 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
     }
 
     async afterReplace(): Promise<void> {
-        if(this.activeEditor === undefined || !this.isLoop || !this.useOldStatus) {
+        if (
+            this.activeEditor === undefined ||
+            !this.isLoop ||
+            !this.useOldStatus
+        ) {
             return;
         }
 
         let lineTxt = "";
         let currentline = this.pos;
         let isInComment = false;
-        while(currentline.line < this.activeEditor.document.lineCount) {
-            let commentReturn = removeComments(this.activeEditor.document.lineAt(currentline).text, isInComment);
+        while (currentline.line < this.activeEditor.document.lineCount) {
+            let commentReturn = removeComments(
+                this.activeEditor.document.lineAt(currentline).text,
+                isInComment
+            );
             lineTxt = commentReturn.line;
             isInComment = commentReturn.isInComment;
 
             let index = lineTxt.indexOf("MPI_Irecv");
-            if(index !== -1) {
+            if (index !== -1) {
                 break;
             }
             currentline = currentline.translate(1);
         }
-        
-        while(currentline.line >= 0) {
-            let commentReturn = removeComments(this.activeEditor.document.lineAt(currentline).text);
+
+        while (currentline.line >= 0) {
+            let commentReturn = removeComments(
+                this.activeEditor.document.lineAt(currentline).text
+            );
             lineTxt = commentReturn.line;
 
             let index = lineTxt.indexOf(this.status.trim());
-            if(index !== -1) {
+            if (index !== -1) {
                 let firstStatement = lineTxt.trim().split(" ")[0];
-                if(firstStatement.trim().substring(0, 10) === "MPI_Status") {
+                if (firstStatement.trim().substring(0, 10) === "MPI_Status") {
                     break;
                 }
             }
             currentline = currentline.translate(-1);
         }
 
-        if(currentline.line > (this.loopPos?.line || this.pos.line)) {
+        if (currentline.line > (this.loopPos?.line || this.pos.line)) {
             // TODO: Fix this
-        }
-        else {
+        } else {
             let index = lineTxt.indexOf(this.status.trim());
-            await this.activeEditor.edit( (editBuilder) => {
-                editBuilder.insert(new Position(currentline.line, index + this.status.length),"["+this.loopCntStr+"]");
+            await this.activeEditor.edit((editBuilder) => {
+                editBuilder.insert(
+                    new Position(currentline.line, index + this.status.length),
+                    "[" + this.loopCntStr + "]"
+                );
             });
         }
     }
@@ -564,7 +594,8 @@ export async function blockingToUnblockingMain() {
             activeEditor.selection = new Selection(rep.start, rep.end);
             activeEditor.revealRange(rep, TextEditorRevealType.InCenter);
             let result = await confirmationDialog(
-                "Turn this statement into an unblocking one?"
+                "Turn this statement into an unblocking one?" +
+                    "\nTurning a blocking send or recv statement into an unblocking one, can provide performance benefits. For more information about unblocking MPI statements run " // TODO: missing information dialog
             );
 
             if (result) {

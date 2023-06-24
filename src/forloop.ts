@@ -19,6 +19,7 @@ export async function checkForLoop(pos: Position) {
     while (currentPos.line >= 0) {
         let line = activeEditor.document.lineAt(currentPos);
         if (line.isEmptyOrWhitespace) {
+            currentPos = currentPos.translate(-1);
             continue;
         }
         let commentReturn = removeComments(line.text, isInComment);
@@ -38,7 +39,8 @@ export async function checkForLoop(pos: Position) {
     if (isForLoop) {
         if (
             await confirmationDialog(
-                "Is this mpi statement in a for loop, that can be unrolled?"
+                "Is this mpi statement in a for loop, that can be unrolled?" +
+                    "\nThis is usually the case, if the loop is used to combine multiple independent send/recv statments. If the send/recv statments are dependent on the statements of the previous iteration, the loop can not be unrolled."
             )
         ) {
             let line = removeComments(

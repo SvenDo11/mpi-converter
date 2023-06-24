@@ -8,13 +8,25 @@ import {
     ProcessExecutionOptions,
     TextEditorRevealType,
     Selection,
-    workspace
+    workspace,
 } from "vscode";
 import { BroadcastChannel } from "worker_threads";
 import { confirmationDialog } from "./dialogs";
 
 let operators = / |,|.|:|\(|\)|\{|\}|;|=|<|>|\/|\+|\-|\*|\[|\]/;
-let knownFunctions = ["for", "while", "if", "printf", "cout"];
+let knownFunctions = [
+    "for",
+    "while",
+    "if",
+    "printf",
+    "cout",
+    "MPI_Send",
+    "MPI_Isend",
+    "MPI_Recv",
+    "MPI_Wait",
+    "MPI_Waitall",
+];
+let knownConflictFunctions = ["MPI_Finalize"];
 
 export function sendToIsend(
     sendSmt: MPI_SendType,
@@ -197,7 +209,10 @@ async function functionConflictDialog(
         TextEditorRevealType.InCenter
     );
     let result = await confirmationDialog(
-        "Does function '" + name + "' have a datarace with the buffer variable?"
+        "Does function '" +
+            name +
+            "' have a datarace with the buffer variable?" +
+            "\nThis is normaly the case, if the buffer for the send/recv statment is defined globaly, and is accessed by the function."
     );
 
     return result;
@@ -212,9 +227,11 @@ export async function extendOverlapWindow(
     if (activeEditor === undefined) {
         return { pos: pos, conflict: false };
     }
-    let functionConfig = workspace.getConfiguration("mpiconv").get<string>('FunctionDataRace') || "ask";
+    let functionConfig =
+        workspace.getConfiguration("mpiconv").get<string>("FunctionDataRace") ||
+        "ask";
 
-    let currentPos = pos.translate(1); // pos?
+    let currentPos = pos; // pos?
     let subdomainCnt = 0;
     let validPos = currentPos;
     let foundConflict = false;
@@ -248,15 +265,27 @@ export async function extendOverlapWindow(
         // check for functionCalls
         let functions = containsFunctionCalls(lineTxt);
         let conflict = false;
-        if(functionConfig !== "never") {
+        if (functionConfig !== "never") {
             for (let i = 0; i < functions.length; i++) {
-                let location = new Position(currentPos.line, functions[i].location);
+                let location = new Position(
+                    currentPos.line,
+                    functions[i].location
+                );
                 if (knownFunctions.includes(functions[i].name.trim())) {
                     continue;
                 }
-                switch(functionConfig) {
+                if (knownConflictFunctions.includes(functions[i].name.trim())) {
+                    conflict = true;
+                    break;
+                }
+                switch (functionConfig) {
                     case "ask":
-                        if (await functionConflictDialog(functions[i].name, location)) {
+                        if (
+                            await functionConflictDialog(
+                                functions[i].name,
+                                location
+                            )
+                        ) {
                             conflict = true;
                             break;
                         }
@@ -396,7 +425,12 @@ export function removeComments(
                 }
                 break;
             case States.doubleSlash:
-                newLine += " ";
+                if (char === "\n") {
+                    state = States.noComment;
+                    newLine += char;
+                } else {
+                    newLine += " ";
+                }
                 break;
             case States.slashStar:
                 if (char === "/" && line[i - 1] === "*") {
@@ -411,11 +445,11 @@ export function removeComments(
     return { line: newLine, isInComment: state === States.slashStar };
 }
 
-export function removeChars(str: string, chars: string[]){
+export function removeChars(str: string, chars: string[]) {
     let out = "";
-    for(let i = 0; i < str.length; i += 1) {
+    for (let i = 0; i < str.length; i += 1) {
         let char = str[i];
-        if(!chars.includes(char)) {
+        if (!chars.includes(char)) {
             out += char;
         }
     }
