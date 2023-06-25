@@ -23,14 +23,12 @@ double master_work(int n_ranks, int n, int *buffer)
         MPI_Send(buffer + dist_size * i, dist_size, MPI_INT, i, 0, MPI_COMM_WORLD);
     }
 
-    std::cout << "Got here" << std::endl;
     // Get solution from worker. Note that exceeding MAX_WORKER should not result in issues and can therefor be ommited
     // (HINT): So MAX_WORKER is not suitable as loop count
     for (int i = 0; i < ((n_ranks < MAX_WORKER) ? n_ranks - 1 : n_ranks); i++)
     {
         MPI_Recv(solutions + i, 1, MPI_DOUBLE, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
-    std::cout << "Got here 2" << std::endl;
     // Process own buffer
     double total = 0;
     for (int i = dist_size * (n_ranks - 1); i < n; i++)

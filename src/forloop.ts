@@ -1,7 +1,6 @@
 import { ViewColumn, Position, Range, window } from "vscode";
 import { confirmationDialog } from "./dialogs";
 import { containsVariables, findDomain, removeComments } from "./util";
-import { getForLoopHTML } from "./webviews";
 
 const separators = [";", "}"];
 

@@ -79,9 +79,9 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
    Ob das Ergebnis richtig ist, oder nicht wird auf der Kommandozeile ausgegeben.
 4. Testen Sie das Programm, indem Sie folgende befehle im Terminal eingeben:
 
-    `make all`
+    `make`
 
-    `make test`
+    `make run`
 
 5. Wenden Sie nun das Plugin an, indem Sie entweder links auf das MPI Symbol klicken und dann den grünen Pfeil anklicken, oder mit der Tastenkombination "_ctr_ + _shift_ + _p_" das Ausführfenster öffnen und "Convert MPI Statements" ausführen.
 
@@ -91,13 +91,15 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
 
 7. Testen Sie das Resultat mit den Befehlen:
 
-    `make all`
+    `make`
 
-    `make test`
+    `make run`
 
 8. Sollte das Programm nicht direkt Kompilieren, oder das falsche Ergebnis ausrechnen, versuchen Sie die Fehler bitte manuell zu beheben.
 
-9. Wenn Sie alle Instruktionen ersetzt haben und das Programm das richtige Ergebnis ausgibt, oder wenn Sie es nicht schaffen, das Programm nach dem Anwenden des Plugins zum Laufen zu bringen, öffnen Sie bitte den [Fragebogen](https://www.soscisurvey.de/MPIplugin2023/?act=759W41Lq0fAFPPOz0CzaujH6) und füllen ihn aus.
+9. Sie können optional die Schritte 1 bis 8 noch mit dem Ordner _exercise2_ machen oder eigene MPI Programme testen. Feedback zu Letzterem wäre für die Weiterentwicklung des Plugins sehr hilfreich.
+
+10. Wenn Sie alle Instruktionen ersetzt haben und das Programm das richtige Ergebnis ausgibt, oder wenn Sie es nicht schaffen, das Programm nach dem Anwenden des Plugins zum Laufen zu bringen, öffnen Sie bitte den [Fragebogen](https://www.soscisurvey.de/MPIplugin2023/?act=759W41Lq0fAFPPOz0CzaujH6) und füllen ihn aus.
 
 Vielen Dank, dass Sie sich die Zeit genommen haben.
 Ihre Angaben und ihr Feedback tragen maßgeblich zu meiner Masterarbeit bei.

@@ -595,7 +595,8 @@ export async function blockingToUnblockingMain() {
             activeEditor.revealRange(rep, TextEditorRevealType.InCenter);
             let result = await confirmationDialog(
                 "Turn this statement into an unblocking one?" +
-                    "\nTurning a blocking send or recv statement into an unblocking one, can provide performance benefits. For more information about unblocking MPI statements run " // TODO: missing information dialog
+                    "\nTurning a blocking send or recv statement into an unblocking one, can provide performance benefits." +
+                    "Run 'MPI Converter Help' for more information."
             );
 
             if (result) {

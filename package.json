@@ -20,6 +20,12 @@
         "title": "Convert MPI statements",
         "icon": "RunIcon.svg",
         "shortTitle": "MPIconv"
+      },
+      {
+        "command": "mpiconv.showHelp",
+        "title": "MPI Converter Help",
+        "icon": "HelpIcon.svg",
+        "shortTitle": "mpiHelp"
       }
     ],
     "configuration": {
@@ -64,6 +70,11 @@
       "view/title": [
         {
           "command": "mpiconv.convertToUnblocking",
+          "group": "navigation",
+          "when": "view == mpiconv.webview-view"
+        },
+        {
+          "command": "mpiconv.showHelp",
           "group": "navigation",
           "when": "view == mpiconv.webview-view"
         }
