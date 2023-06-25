@@ -35,6 +35,7 @@ This will install all the required Nodejs packages.
 | Confirmationstrings | An array of strings that can be used to confirm in a yes/no dialog. |
 | Decliningstrings | An array of strings that can be used to decline in a yes/no dialog. |
 | FunctionDataRace | Choose what to do when an unknown function may be in conflict with the current Operation. |
+| runFormatter | If set to true, the plugin will run the default formatter on the current document, after the mpi conversion is finished. |
 
 ## Release Notes
 

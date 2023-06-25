@@ -6,6 +6,8 @@ import {
     Selection,
     TextEditorRevealType,
     TextEditor,
+    commands,
+    workspace,
 } from "vscode";
 
 import { confirmationDialog, inputDialog } from "./dialogs";
@@ -34,6 +36,8 @@ abstract class BlockingToUnblocking<MPI_Type> {
     loopStr: string = "";
     loopCntStr = "N";
     loopIterator: string = "";
+
+    indentation = "";
 
     status = "status";
     request = "request";
@@ -557,10 +561,14 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
 }
 
 export async function blockingToUnblockingMain() {
+    console.log("Got here");
+
     let activeEditor = window.activeTextEditor;
     if (activeEditor === undefined) {
         return;
     }
+
+    let found_something = false;
     let searchStrings = ["MPI_Send", "MPI_Recv"];
     for (let i = 0; i < 2; i += 1) {
         let searchString = searchStrings[i];
@@ -582,6 +590,7 @@ export async function blockingToUnblockingMain() {
                 currentline += 1;
                 continue;
             }
+            found_something = true;
             let position = new Position(currentline, index);
             let rep = new Range(
                 position,
@@ -594,9 +603,13 @@ export async function blockingToUnblockingMain() {
             activeEditor.selection = new Selection(rep.start, rep.end);
             activeEditor.revealRange(rep, TextEditorRevealType.InCenter);
             let result = await confirmationDialog(
-                "Turn this statement into an unblocking one?" +
-                    "\nTurning a blocking send or recv statement into an unblocking one, can provide performance benefits." +
-                    "Run 'MPI Converter Help' for more information."
+                "Turn this " +
+                    searchString +
+                    " in line " +
+                    (currentline + 1) +
+                    " into an non-blocking one?" +
+                    " Turning a blocking send or recv statement into an non-blocking one, can provide performance benefits." +
+                    " Run 'MPI Converter Help' for more information."
             );
 
             if (result) {
@@ -611,5 +624,20 @@ export async function blockingToUnblockingMain() {
 
             currentline += 1;
         }
+    }
+    let run_formatter = workspace
+        .getConfiguration("mpiconv")
+        .get<boolean>("runFormatter");
+    if (run_formatter === undefined) {
+        run_formatter === true;
+    }
+    if (run_formatter) {
+        commands.executeCommand("editor.action.formatDocument");
+    }
+
+    if (found_something) {
+        window.showInformationMessage("MPI Converter done!");
+    } else {
+        window.showInformationMessage("No relevant MPI statements found!");
     }
 }

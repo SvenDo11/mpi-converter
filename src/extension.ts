@@ -35,12 +35,6 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(convertToUnblocking);
     context.subscriptions.push(showHelp);
-    /*context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(
-            "mpiconv.webview-view",
-            new MPIConvViewProvider()
-        )
-    );*/
 }
 
 // This method is called when your extension is deactivated
