@@ -1,20 +1,28 @@
 CXX=		mpic++
 CFLAGS=		-g -Wall -Wextra 
-LDFLAGS= 	-I /usr/lib/x86_64-linux-gnu/openmpi/include -I /usr/lib/x86_64-linux-gnu/openmpi/lib/
+# LDFLAGS= 	-I /usr/lib/x86_64-linux-gnu/openmpi/include -I /usr/lib/x86_64-linux-gnu/openmpi/lib/
+
+ifeq ($(OS),Windows_NT)     # is Windows_NT on XP, 2000, 7, Vista, 10...
+	TARGETEXTENSION= exe
+else
+	TARGETEXTENSION= out
+endif
+
 TARGET=		mandelbrot
 
-BLOCKX = 4
-BLOCKY = 4
 
 all: mandelbrot
 
-.PHONY: all clean
+.PHONY: all clean run
 
-mandelbrot: mb_main.o mb_server.o mb_worker.o print_ppm.o
-	$(CXX) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+mandelbrot: mandelbrot.o exercise2.o verify.o print_ppm.o
+	$(CXX) -o $(TARGET).$(TARGETEXTENSION) $^ $(CFLAGS) $(LDFLAGS)
 
 %.o : %.cpp
-	$(CXX) -c $(CFLAGS) $(LDFLAGS) $< -o $@ -DBLOCKX=$(BLOCKX) -DBLOCKY=$(BLOCKY)
+	$(CXX) -c $(CFLAGS) $(LDFLAGS) $< -o $@ 
 
 clean:
-	rm -rvf *.o $(TARGET)
+	rm -rvf *.o $(TARGET).$(TARGETEXTENSION)
+
+run:
+	mpirun $(TARGET).$(TARGETEXTENSION)

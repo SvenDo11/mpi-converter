@@ -84,7 +84,7 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
    Ob das Ergebnis richtig ist, oder nicht wird auf der Kommandozeile ausgegeben.
 4. Testen Sie das Programm, indem Sie folgende befehle im Terminal eingeben:
 
-    `make`
+    `make all`
 
     `make run`
 
@@ -96,13 +96,13 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
 
 7. Testen Sie das Resultat mit den Befehlen:
 
-    `make`
+    `make all`
 
     `make run`
 
 8. Sollte das Programm nicht direkt Kompilieren, oder das falsche Ergebnis ausrechnen, versuchen Sie die Fehler bitte manuell zu beheben.
 
-9. Sie können optional die Schritte 1 bis 8 noch mit Ihren eigenen MPI Programmen testen. Feedback zu Letzterem wäre für die Weiterentwicklung des Plugins sehr hilfreich.
+9. Sie können optional die Schritte 1 bis 8 noch mit _exercise2_ oder Ihren eigenen MPI Programmen testen. Feedback zu Letzterem sind für die Weiterentwicklung des Plugins sehr hilfreich.
 
 10. Wenn Sie alle Instruktionen ersetzt haben und das Programm das richtige Ergebnis ausgibt, oder wenn Sie es nicht schaffen, das Programm nach dem Anwenden des Plugins zum Laufen zu bringen, öffnen Sie bitte den [Fragebogen](https://www.soscisurvey.de/MPIplugin2023/)\* und füllen ihn aus.
 
@@ -111,4 +111,4 @@ Ihre Angaben und ihr Feedback tragen maßgeblich zu meiner Masterarbeit bei.
 
 Bei Fragen oder Problemen wenden Sie sich gerne an mich: sven.donnerhak@stud.tu-darmstadt.de
 
-\* Link: https://www.soscisurvey.de/MPIplugin2023/?act=5QRrimP9dj9u8os5PXj33Lrz
+\* Link: https://www.soscisurvey.de/MPIplugin2023/

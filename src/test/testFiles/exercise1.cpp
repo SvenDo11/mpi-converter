@@ -98,7 +98,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // Get the rank of the process
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 

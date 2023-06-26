@@ -83,7 +83,7 @@ They then send the result to the master and are done.
 Lastly the master process uses the function _verify_ to make sure the distribution did deliver the correct result. If it was correct or not, will then be written to the command line.
 
 4. Test the program by running the following commands:
-   `make`
+   `make all`
    `make run`
 
 5. Now run the Plugin, by selection the MPI symbol in the Activity Panel (on the left), and then clicking the green arrow. Alternativly you can open the run panel, by pressing "_ctrl_ + _shift_ + _p_" and run "Convert MPI Statements".
@@ -94,12 +94,13 @@ Lastly the master process uses the function _verify_ to make sure the distributi
    Please try to change all four MPI send/recv instructions into non-blocking ones.
 
 7. Test the result by running:
-   `make`
+   `make all`
    `make run`
 
 8. Should the programm not compile, or deliver the wrong result, try to fix the issue manually.
 
-9. You may optionally repeat steps 1 to 8 with one of your own MPI programs.
+9. You may optionally repeat steps 1 to 8 with _exercise2_ or one of your own MPI programs.
+
 10. If all instructions are replaced and the program passes the test, or if you can not fix the issues, please continue with the survey, you can find [here](https://www.soscisurvey.de/MPIplugin2023/)\*
 
 Thank you for taking the time.
@@ -107,4 +108,4 @@ Your input and feedback is contributing to my thesis a lot.
 
 If you have any questions or issues, contact me: sven.donnerhak@stud.tu-darmstadt.de
 
-\* Link: https://www.soscisurvey.de/MPIplugin2023/?act=5QRrimP9dj9u8os5PXj33Lrz
+\* Link: https://www.soscisurvey.de/MPIplugin2023/
