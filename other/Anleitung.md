@@ -88,6 +88,9 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
 
     `make run`
 
+    Hierfür können Sie das integrierte Terminal nutzen. Navigieren Sie dafür in das Terminal Menü und clicken Sie auf _Neues Terminal_ (_New Terminal_).
+    In Windows wird dies eine PowerShell öffnen, in der Sie mit dem Befehl `wsl` ihr Linux Subsystem nutzen können.
+
 5. Wenden Sie nun das Plugin an, indem Sie entweder das MPI Symbol links in der Aktivitätenleiste klicken und dann den grünen Pfeil anklicken, oder mit der Tastenkombination "_ctr_ + _shift_ + _p_" das Ausführfenster öffnen und "Convert MPI Statements" ausführen.
 
     ![](media/run_plugin.png)
@@ -100,9 +103,19 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
 
     `make run`
 
-8. Sollte das Programm nicht direkt Kompilieren, oder das falsche Ergebnis ausrechnen, versuchen Sie die Fehler bitte manuell zu beheben.
+8. Sollte das Programm nicht direkt kompilieren, oder das falsche Ergebnis ausrechnen, versuchen Sie die Fehler bitte manuell zu beheben.
 
 9. Sie können optional die Schritte 1 bis 8 noch mit _exercise2_ oder Ihren eigenen MPI Programmen testen. Feedback zu Letzterem sind für die Weiterentwicklung des Plugins sehr hilfreich.
+
+    - Zur _exercise2_: Hier finden sie den relevanten MPI code in der Datei _exercise2.cpp_. Sie können wie gewohnt mit `make all` und `make run` das Programm testen.
+      In dieser exercise sind viele MPI Instruktionen, nicht alle können sinnvoll umgewandelt werden. Also ist es hier nicht notwendig alle Instruktionen zu ersetzen.
+
+        Das Programm berechnet die Mandelbrot-Menge in einem vordefiniertem Raum. Dafür wird ein Prozess gewählt, der als Master arbeitet.
+        Dieser weist jedem Worker eine X Koordinate zu. Die Worker berechnen die gesamte Spalte zu dieser X Koordinate.
+        Wenn ein Worker fertig ist, schickt er die Spalte zum Master, und bekommt eine neue X Koordinate zugewiesen.
+        Der Master empfängt die Spalte, verteilt eine neue X Koordinate und schreibt die Spalte in seinem Buffer.
+
+        Nachdem alle Spalten berechnet sind, verifiziert der Master, dass das Ergebnis korrekt ist und speichert die Mandelbrot-Menge als ppm Bild.
 
 10. Wenn Sie alle Instruktionen ersetzt haben und das Programm das richtige Ergebnis ausgibt, oder wenn Sie es nicht schaffen, das Programm nach dem Anwenden des Plugins zum Laufen zu bringen, öffnen Sie bitte den [Fragebogen](https://www.soscisurvey.de/MPIplugin2023/)\* und füllen ihn aus.
 
