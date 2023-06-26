@@ -311,7 +311,11 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
     }
 
     getSuffixStr(): string {
-        let waitStr = "MPI_Wait(&" + this.request + ", &" + this.status + ");";
+        let status = this.status;
+        if (status !== "MPI_STATUS_IGNORE") {
+            status = "&" + status;
+        }
+        let waitStr = "MPI_Wait(&" + this.request + ", " + status + ");";
         if (this.isLoop) {
             waitStr =
                 "MPI_Waitall(" +
@@ -348,17 +352,22 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
         let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|&/);
         if (statments.length > 1) {
             let guessedbuffer = "";
+            let foundStatements = 0;
             for (let i = 0; i < statments.length; i += 1) {
-                guessedbuffer = statments[i];
-                if (guessedbuffer !== "") {
-                    break;
+                if (statments[i] !== "") {
+                    if (guessedbuffer == "") {
+                        guessedbuffer = statments[i];
+                    }
+                    foundStatements += 1;
                 }
             }
-            buf = await inputDialog(
-                "What is the buffer for the MPI message?",
-                guessedbuffer,
-                "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
-            );
+            if (foundStatements > 1) {
+                buf = await inputDialog(
+                    "What is the buffer for the MPI message?",
+                    guessedbuffer,
+                    "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
+                );
+            }
         }
         this.conflictVariableStr = [buf];
         return [buf];
@@ -408,14 +417,14 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
             "Make sure to use a unique variable name in the current Domain."
         );
         let requestStr = "MPI_Request " + this.request + ";";
+        let statusParam = this.blockingInst?.status || "Error";
+
+        this.status = removeChars(statusParam, ["&", "*"]);
 
         if (this.isLoop) {
             requestStr =
                 "MPI_Request " + this.request + "[" + this.loopCntStr + "];";
 
-            let statusParam = this.blockingInst?.status || "Error";
-
-            this.status = removeChars(statusParam, ["&", "*"]);
             if (this.status !== "MPI_STATUS_IGNORE") {
                 this.useOldStatus = await confirmationDialog(
                     "Use old status variable: '" +
@@ -499,8 +508,12 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
                 "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
             );
         }
-        this.conflictVariableStr = [buf, this.blockingInst.status];
-        return [buf, this.blockingInst.status];
+        if (this.status === "MPI_STATUS_IGNORE") {
+            this.conflictVariableStr = [buf];
+        } else {
+            this.conflictVariableStr = [buf, this.status];
+        }
+        return this.conflictVariableStr;
     }
 
     async afterReplace(): Promise<void> {

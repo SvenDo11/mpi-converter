@@ -66,7 +66,9 @@ export function containsVariables(
 ): boolean {
     //line = line.replace(/\s/g, "");
     line = line.trim();
-    let statments = line.split(/ |,|\(|\)|\{|\}|;|=|<|>|\/|\+|\-|\*|\[|\]/);
+    let statments = line.split(
+        / |,|\.|\(|\)|\{|\}|;|:|=|<|>|\/|\+|\-|\*|&|\[|\]/
+    );
     let found = false;
     for (let i = 0; i < statments.length; i++) {
         variableNames.forEach((element) => {
