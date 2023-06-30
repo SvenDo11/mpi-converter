@@ -317,6 +317,9 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
         }
         let waitStr = "MPI_Wait(&" + this.request + ", " + status + ");";
         if (this.isLoop) {
+            if (status !== "MPI_STATUS_IGNORE") {
+                status = "MPI_STATUSES_IGNORE";
+            }
             waitStr =
                 "MPI_Waitall(" +
                 this.loopCntStr +
