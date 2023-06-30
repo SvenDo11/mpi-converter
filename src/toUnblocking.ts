@@ -358,7 +358,7 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
             let foundStatements = 0;
             for (let i = 0; i < statments.length; i += 1) {
                 if (statments[i] !== "") {
-                    if (guessedbuffer == "") {
+                    if (guessedbuffer === "") {
                         guessedbuffer = statments[i];
                     }
                     foundStatements += 1;
