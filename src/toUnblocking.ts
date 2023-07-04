@@ -201,7 +201,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
             cntPreview.trim(),
             "You can enter a specific number, a variable name or a c++ expression to determine the loop iterations. Most of the time the correct statement is written in the termination condition of the for loop parameters."
         );
-        if (cntString === undefined) {
+        if (cntString === undefined || cntString === "") {
             window.showErrorMessage(
                 "Without a valid amount of loop iterations, the loop cannot be correctly unrolled. Please edit the array size manualy!"
             );
@@ -228,11 +228,11 @@ abstract class BlockingToUnblocking<MPI_Type> {
             iteratorpreview.trim(),
             "You need to provide a iterator for the request and status variables of the MPI unblocking operation. In most cases this is the for loop iterator."
         );
-        if (iteratorString === undefined) {
+        if (iteratorString === undefined || iteratorString === "") {
             window.showErrorMessage(
                 "Without a valid loop iterator, the loop cannot correctly execute the MPI statements. Please edit the iterator manualy!"
             );
-            iteratorString = "/* MISSING SIZE */";
+            iteratorString = "/* MISSING ITERATOR */";
         }
         return iteratorString;
     }
