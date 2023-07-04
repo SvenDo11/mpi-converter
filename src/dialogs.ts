@@ -1,4 +1,5 @@
-import { window, QuickPickOptions, workspace, InputBoxOptions } from "vscode";
+import { window, QuickPickOptions, workspace, InputBoxOptions} from "vscode";
+import { deflateSync } from "zlib";
 
 const conv = workspace.getConfiguration("mpiconv");
 
@@ -28,10 +29,18 @@ export async function inputDialog(
     value?: string,
     prompt?: string
 ) {
-    let result = await window.showInputBox(<InputBoxOptions>{
-        title: msg,
-        value: value,
-        prompt: prompt,
+    let dialog = window.createInputBox();
+    dialog.value = value || "";
+    dialog.prompt = prompt || "";
+
+    dialog.title = msg;
+
+    dialog.show();
+    dialog.ignoreFocusOut = true;
+    await new Promise<void>((resolve, reject) => {
+        dialog.onDidAccept(() => resolve());
     });
-    return result === undefined ? "" : result;
+    let result = dialog.value;
+    dialog.dispose();
+    return result;
 }

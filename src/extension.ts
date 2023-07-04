@@ -1,7 +1,6 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import { replacer } from "./replaceme";
 import { blockingToUnblockingMain } from "./toUnblocking";
 import { getHelpHTML } from "./webviews";
 
@@ -33,6 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         panel.webview.html = getHelpHTML();
     });
+
     context.subscriptions.push(convertToUnblocking);
     context.subscriptions.push(showHelp);
 }
