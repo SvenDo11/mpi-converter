@@ -88,14 +88,15 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
 
     `make run`
 
-5. Wenden Sie nun das Plugin an, indem Sie entweder das MPI Symbol links in der Aktivitätenleiste klicken und dann den grünen Pfeil anklicken, oder mit der Tastenkombination "_ctr_ + _shift_ + _p_" das Ausführfenster öffnen und "Convert MPI Statements" ausführen.
+5. Wenden Sie nun das Plugin an, indem Sie entweder das MPI Symbol links in der Aktivitätenleiste klicken und dann den grünen Pfeil anklicken, oder mit der Tastenkombination "_strg_ + _shift_ + _p_" das Ausführfenster öffnen und "Convert MPI Statements" ausführen.
 
     ![](media/run_plugin.png)
 
 6. Das Plugin wird ihnen nun eine Reihe an Fragen mit dem Dialogfenster stellen. Versuchen Sie jede der 4 MPI send/recv Instruktionen mit dem Plugin zu ersetzen.
+Bitte beachten Sie, das Visual Studio Code linksclicks im Editorfenster als bestätigen für das Dialog Fenster registriert. Dies kann beim navigieren im Code wärend die Code Transformation läuft zu unerwünschten verhalten führen.
 
-7. Testen Sie das Resultat mit den Befehlen:
-
+7. Speichern Sie das Dokument mit "_strg_ + _s_" und testen das Resultat mit den Befehlen:
+ 
     `make all`
 
     `make run`

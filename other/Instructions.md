@@ -92,8 +92,9 @@ Lastly the master process uses the function _verify_ to make sure the distributi
 
 6. The plugin will guide you trough the process with a set of dialog windows.
    Please try to change all four MPI send/recv instructions into non-blocking ones.
+   Please note, that Visual Studio Code registers left clicks anywhere in the window as confirmation for the dialog. This can result in unwanted behavior while the plugin is running.
 
-7. Test the result by running:
+7. Save the document with "_ctrl_ + _s_" and test the result by running:
    `make all`
    `make run`
 
