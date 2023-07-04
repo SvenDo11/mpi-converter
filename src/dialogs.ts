@@ -1,4 +1,4 @@
-import { window, QuickPickOptions, workspace, InputBoxOptions} from "vscode";
+import { window, QuickPickOptions, workspace, InputBoxOptions, QuickPickItem, QuickPickItemKind, QuickInput} from "vscode";
 import { deflateSync } from "zlib";
 
 const conv = workspace.getConfiguration("mpiconv");
@@ -7,12 +7,11 @@ export async function confirmationDialog(msg: string, value?: string) {
     let yesStrings = conv.get<string[]>("confirmationstrings") || ["yes", "y"];
     let noStrings = conv.get<string[]>("decliningstrings") || ["no", "n"];
 
-    let i = 0;
     let result = await window.showQuickPick(["yes", "no"], <QuickPickOptions>{
         title: msg,
         placeHolder: "yes",
         prompt: value,
-        onDidSelectItem: (item) => {},
+        ignoreFocusOut: true,
     });
     if (result !== undefined) {
         if (yesStrings.includes(result)) {
@@ -29,18 +28,15 @@ export async function inputDialog(
     value?: string,
     prompt?: string
 ) {
-    let dialog = window.createInputBox();
-    dialog.value = value || "";
-    dialog.prompt = prompt || "";
-
-    dialog.title = msg;
-
-    dialog.show();
-    dialog.ignoreFocusOut = true;
-    await new Promise<void>((resolve, reject) => {
-        dialog.onDidAccept(() => resolve());
+    let result = await window.showInputBox(<InputBoxOptions>{
+        title: msg,
+        value: value,
+        prompt: prompt,
+        ignoreFocusOut: true,
     });
-    let result = dialog.value;
-    dialog.dispose();
+
+    if(result === undefined) {
+        return "";
+    }
     return result;
 }
