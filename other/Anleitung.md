@@ -96,8 +96,9 @@ Sie benötigen die folgenden Programme zur Teilnahme an der Umfrage:
     ![](media/run_plugin.png)
 
 6. Das Plugin wird ihnen nun eine Reihe an Fragen mit dem Dialogfenster stellen. Versuchen Sie jede der 4 MPI send/recv Instruktionen mit dem Plugin zu ersetzen.
+   Bitte beachten Sie, dass Visual Studio Code Linksklicks im Editorfenster als bestätigen für das Dialogfenster registriert. Dies kann beim Navigieren im Code während die Codetransformation läuft, zu unerwünschten Verhalten führen.
 
-7. Testen Sie das Resultat mit den Befehlen:
+7. Speichern Sie das Dokument mit "_strg_ + _s_" und testen das Resultat mit den Befehlen:
 
     `make all`
 

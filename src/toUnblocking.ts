@@ -232,7 +232,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
             window.showErrorMessage(
                 "Without a valid loop iterator, the loop cannot correctly execute the MPI statements. Please edit the iterator manualy!"
             );
-            iteratorString = "/* MISSING SIZE */";
+            iteratorString = "/* MISSING ITERATOR */";
         }
         return iteratorString;
     }
@@ -323,6 +323,9 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
         }
         let waitStr = "MPI_Wait(&" + this.request + ", " + status + ");";
         if (this.isLoop) {
+            if (status !== "MPI_STATUS_IGNORE") {
+                status = "MPI_STATUSES_IGNORE";
+            }
             waitStr =
                 "MPI_Waitall(" +
                 this.loopCntStr +
@@ -361,7 +364,7 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
             let foundStatements = 0;
             for (let i = 0; i < statments.length; i += 1) {
                 if (statments[i] !== "") {
-                    if (guessedbuffer == "") {
+                    if (guessedbuffer === "") {
                         guessedbuffer = statments[i];
                     }
                     foundStatements += 1;

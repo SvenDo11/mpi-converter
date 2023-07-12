@@ -93,19 +93,20 @@ Lastly the master process uses the function _verify_ to make sure the distributi
 
 ![](media/run_plugin.png)
 
-6.  The plugin will guide you trough the process with a set of dialog windows.
-    Please try to change all four MPI send/recv instructions into non-blocking ones.
+6. The plugin will guide you trough the process with a set of dialog windows.
+   Please try to change all four MPI send/recv instructions into non-blocking ones.
+   Please note, that Visual Studio Code registers left clicks anywhere in the window as confirmation for the dialogue. This can result in unwanted behaviour while the plugin is running.
 
-7.  Test the result by running:
-    `make all`
-    `make run`
+7. Save the document with "_ctrl_ + _s_" and test the result by running:
+   `make all`
+   `make run`
 
-8.  Should the programm not compile, or deliver the wrong result, try to fix the issue manually.
+8. Should the programm not compile, or deliver the wrong result, try to fix the issue manually.
 
-9.  You may optionally repeat steps 1 to 8 with _exercise2_ or one of your own MPI programs.
+9. You may optionally repeat steps 1 to 8 with _exercise2_ or one of your own MPI programs.
 
-    -   Note for _exercise2_: You will find all relevant code in the file _exercise2_. You can run `make all` and `make run` to test the program.
-        This exercise has more MPI send/recv statements. You don't have to turn every statement into an non-blocking one.
+    - Note for _exercise2_: You will find all relevant code in the file _exercise2_. You can run `make all` and `make run` to test the program.
+      This exercise has more MPI send/recv statements. You don't have to turn every statement into an non-blocking one.
 
         This program calculates the Mandelbrot-set in a predefined space.
         For this, one process is selected as master. The master process sends a x-coordinate to every worker. The worker calculates the hole row of y-coordinates for the x-coordinate and return the row to the master.
