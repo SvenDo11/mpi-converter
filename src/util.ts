@@ -457,3 +457,31 @@ export function removeChars(str: string, chars: string[]) {
     }
     return out;
 }
+
+export function findStringInDocument(editor: TextEditor, searchString: string): Position[] {
+    let posArr:Position[] = [];
+    let currentline = 0;
+    let isInComment = false;
+    while (currentline < editor.document.lineCount) {
+        let line = editor.document.lineAt(
+            new Position(currentline, 1)
+        );
+        if (line.isEmptyOrWhitespace) {
+            currentline += 1;
+            continue;
+        }
+        let commentReturn = removeComments(line.text, isInComment);
+        let lineTxt = commentReturn.line;
+        isInComment = commentReturn.isInComment;
+        let index = lineTxt.indexOf(searchString);
+        if (index === -1) {
+            currentline += 1;
+            continue;
+        }
+        let position = new Position(currentline, index);
+        posArr.push(position);
+        currentline += 1;
+    }
+
+    return posArr;
+}

@@ -3,6 +3,7 @@
 import * as vscode from "vscode";
 import { blockingToUnblockingMain } from "./toUnblocking";
 import { getHelpHTML } from "./webviews";
+import { MPIStatementProvider } from "./mpiView";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -35,6 +36,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(convertToUnblocking);
     context.subscriptions.push(showHelp);
+    
+    vscode.window.registerTreeDataProvider("mpiconv.mpiTreeView",new MPIStatementProvider());
 }
 
 // This method is called when your extension is deactivated

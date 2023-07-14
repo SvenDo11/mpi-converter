@@ -611,8 +611,6 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
 }
 
 export async function blockingToUnblockingMain() {
-    console.log("Got here");
-
     let activeEditor = window.activeTextEditor;
     if (activeEditor === undefined) {
         return;
