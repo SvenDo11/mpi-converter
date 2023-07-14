@@ -34,10 +34,23 @@ export function activate(context: vscode.ExtensionContext) {
         panel.webview.html = getHelpHTML();
     });
 
+    const MPITreeProvider = new MPIStatementProvider();
+
+    let refreshTree = vscode.commands.registerCommand(
+        "mpiconv.refreshTree",
+        () => {
+            MPITreeProvider.refresh();
+        }
+    );
+
     context.subscriptions.push(convertToUnblocking);
     context.subscriptions.push(showHelp);
-    
-    vscode.window.registerTreeDataProvider("mpiconv.mpiTreeView",new MPIStatementProvider());
+    context.subscriptions.push(refreshTree);
+
+    vscode.window.registerTreeDataProvider(
+        "mpiconv.mpiTreeView",
+        MPITreeProvider
+    );
 }
 
 // This method is called when your extension is deactivated
