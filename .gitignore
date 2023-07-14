@@ -7,3 +7,7 @@ node_modules
 *.out
 *.o
 *.exe
+*.pdf
+*.log
+other/*.log
+other/*.pdf

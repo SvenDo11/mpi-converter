@@ -66,7 +66,7 @@
     "views": {
       "mpi-converter": [
         {
-          "id": "mpiconv.webview-view",
+          "id": "mpiconv.mpiTreeView",
           "name": "Modernise MPI"
         }
       ]
@@ -76,12 +76,12 @@
         {
           "command": "mpiconv.convertToUnblocking",
           "group": "navigation",
-          "when": "view == mpiconv.webview-view"
+          "when": "view == mpiconv.mpiTreeView"
         },
         {
           "command": "mpiconv.showHelp",
           "group": "navigation",
-          "when": "view == mpiconv.webview-view"
+          "when": "view == mpiconv.mpiTreeView"
         }
       ]
     }
