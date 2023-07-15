@@ -510,3 +510,13 @@ export function getStatementString(statement: StatementType): string {
             return "";
     }
 }
+
+export function getFullRangeOfFunction(editor: TextEditor, pos: Position):Range {
+    let startPos = editor.document.offsetAt(pos);
+    let codeStr = removeComments(editor.document.getText()).line;
+    let endPos = codeStr.indexOf(")",startPos);
+    if(endPos === -1) {
+        endPos = startPos;
+    }
+    return new Range(pos, editor.document.positionAt(endPos));
+}

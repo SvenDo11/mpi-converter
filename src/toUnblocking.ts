@@ -8,6 +8,8 @@ import {
     TextEditor,
     commands,
     workspace,
+    Color,
+    ThemeColor,
 } from "vscode";
 
 import { confirmationDialog, inputDialog } from "./dialogs";
@@ -23,6 +25,7 @@ import {
     removeChars,
     runFormatter,
     getStatementString,
+    getFullRangeOfFunction,
 } from "./util";
 import { checkForLoop } from "./forloop";
 import { error } from "console";
@@ -675,6 +678,9 @@ export async function convertStatement(
     // Highlighting and revealing
     editor.selection = new Selection(rep.start, rep.end);
     editor.revealRange(rep, TextEditorRevealType.InCenter);
+    let fullRange = getFullRangeOfFunction(editor, position)
+    let decoration = window.createTextEditorDecorationType({borderColor: "red", borderStyle: "solid", borderSpacing: "10"});
+    editor.setDecorations(decoration,[fullRange]);
     let result = await confirmationDialog(
         "Turn this " +
             searchString +
@@ -703,4 +709,5 @@ export async function convertStatement(
                 "successfully"
         );
     }
+    decoration.dispose();
 }
