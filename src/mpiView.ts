@@ -17,6 +17,7 @@ import {
     TextEditor,
 } from "vscode";
 import { findStringInDocument } from "./util";
+import { StatementType } from "./statementsTypes";
 
 export class MPIStatementProvider implements TreeDataProvider<MPITreeItem> {
     getTreeItem(element: MPITreeItem): MPITreeItem | Thenable<MPITreeItem> {
@@ -38,7 +39,7 @@ export class MPIStatementProvider implements TreeDataProvider<MPITreeItem> {
             let file = editor.document.fileName;
             let filepath = path.parse(file);
             let label = filepath.name + filepath.ext;
-            items.push(new MPITreeItem(label, undefined, editor));
+            items.push(new MPITreeItem(label, editor, StatementType.Other));
         }
         return items;
     }
@@ -59,10 +60,24 @@ export class MPIStatementProvider implements TreeDataProvider<MPITreeItem> {
         let items: MPITreeItem[] = [];
 
         for (let pos of sendPos) {
-            items.push(new MPITreeItem("MPI_Send Line " + (pos.line + 1), pos));
+            items.push(
+                new MPITreeItem(
+                    "MPI_Send Line " + (pos.line + 1),
+                    activeEditor,
+                    StatementType.MPI_Send,
+                    pos
+                )
+            );
         }
         for (let pos of recvPos) {
-            items.push(new MPITreeItem("MPI_Recv Line " + (pos.line + 1), pos));
+            items.push(
+                new MPITreeItem(
+                    "MPI_Recv Line " + (pos.line + 1),
+                    activeEditor,
+                    StatementType.MPI_Recv,
+                    pos
+                )
+            );
         }
         items.sort((a, b) => {
             return a.getPosition().line - b.getPosition().line;
@@ -81,25 +96,26 @@ export class MPIStatementProvider implements TreeDataProvider<MPITreeItem> {
     }
 }
 
-class MPITreeItem extends TreeItem {
-    private _isFile: boolean;
+export class MPITreeItem extends TreeItem {
     private pos: Position | undefined;
-    private editor: TextEditor | undefined;
+    private editor: TextEditor;
+    private type: StatementType;
 
     constructor(
         public readonly label: string,
-        pos?: Position,
-        editor?: TextEditor
+        editor: TextEditor,
+        type: StatementType,
+        pos?: Position
     ) {
         super(
             label,
-            pos === undefined
+            type === StatementType.Other
                 ? TreeItemCollapsibleState.Expanded
                 : TreeItemCollapsibleState.None
         );
-        this._isFile = pos === undefined;
         this.pos = pos;
         this.editor = editor;
+        this.type = type;
     }
 
     getPosition(): Position {
@@ -110,13 +126,14 @@ class MPITreeItem extends TreeItem {
     }
 
     getEditor(): TextEditor {
-        if (this.editor === undefined) {
-            throw new Error("Can not return the editor of a statement!");
-        }
         return this.editor;
     }
 
+    getType(): StatementType {
+        return this.type;
+    }
+
     isFile(): boolean {
-        return this._isFile;
+        return this.type === StatementType.Other;
     }
 }

@@ -11,7 +11,7 @@ import {
 } from "vscode";
 
 import { confirmationDialog, inputDialog } from "./dialogs";
-import { MPI_SendType, MPI_RecvType } from "./statementsTypes";
+import { MPI_SendType, MPI_RecvType, StatementType } from "./statementsTypes";
 import {
     sendToIsend,
     recvToIrecv,
@@ -21,6 +21,8 @@ import {
     extractParams,
     removeComments,
     removeChars,
+    runFormatter,
+    getStatementString,
 } from "./util";
 import { checkForLoop } from "./forloop";
 import { error } from "console";
@@ -618,74 +620,87 @@ export async function blockingToUnblockingMain() {
 
     let found_something = false;
     let searchStrings = ["MPI_Send", "MPI_Recv"];
-    for (let i = 0; i < 2; i += 1) {
-        let searchString = searchStrings[i];
-        let currentline = 0;
-        let isInComment = false;
-        while (currentline < activeEditor.document.lineCount) {
-            let line = activeEditor.document.lineAt(
-                new Position(currentline, 1)
-            );
-            if (line.isEmptyOrWhitespace) {
-                currentline += 1;
-                continue;
-            }
-            let commentReturn = removeComments(line.text, isInComment);
-            let lineTxt = commentReturn.line;
-            isInComment = commentReturn.isInComment;
-            let index = lineTxt.indexOf(searchString);
-            if (index === -1) {
-                currentline += 1;
-                continue;
-            }
-            found_something = true;
-            let position = new Position(currentline, index);
-            let rep = new Range(
-                position,
-                new Position(
-                    position.line,
-                    position.character + searchString.length
-                )
-            );
-            // Highlighting and revealing
-            activeEditor.selection = new Selection(rep.start, rep.end);
-            activeEditor.revealRange(rep, TextEditorRevealType.InCenter);
-            let result = await confirmationDialog(
-                "Turn this " +
-                    searchString +
-                    " in line " +
-                    (currentline + 1) +
-                    " into an non-blocking one?" +
-                    " Turning a blocking send or recv statement into an non-blocking one, can provide performance benefits." +
-                    " Run 'MPI Converter Help' for more information."
-            );
-
-            if (result) {
-                if (i === 0) {
-                    let replacer = new SendConverter(position);
-                    await replacer.replace();
-                } else {
-                    let replacer = new RecvConverter(position);
-                    await replacer.replace();
-                }
-            }
-
+    let currentline = 0;
+    let isInComment = false;
+    while (currentline < activeEditor.document.lineCount) {
+        let line = activeEditor.document.lineAt(new Position(currentline, 1));
+        if (line.isEmptyOrWhitespace) {
             currentline += 1;
+            continue;
         }
-    }
-    let run_formatter = workspace
-        .getConfiguration("mpiconv")
-        .get<boolean>("runFormatter");
-    if (run_formatter === undefined) {
-        run_formatter === true;
-    }
-    if (run_formatter) {
-        commands.executeCommand("editor.action.formatDocument");
+        let commentReturn = removeComments(line.text, isInComment);
+        let lineTxt = commentReturn.line;
+        isInComment = commentReturn.isInComment;
+        if (!containsVariables(lineTxt, searchStrings)) {
+            currentline += 1;
+            continue;
+        }
+        let indexes = searchStrings.map((searchString) => {
+            return lineTxt.indexOf(searchString);
+        });
+        found_something = true;
+        for (let i = 0; i < indexes.length; i += 1) {
+            if (indexes[i] === -1) {
+                continue;
+            }
+            let position = new Position(currentline, indexes[i]);
+            await convertStatement(
+                activeEditor,
+                position,
+                i === 0 ? StatementType.MPI_Send : StatementType.MPI_Recv
+            );
+        }
+
+        currentline += 1;
     }
 
     if (found_something) {
         window.showInformationMessage("MPI Converter done!");
     } else {
         window.showInformationMessage("No relevant MPI statements found!");
+    }
+}
+
+export async function convertStatement(
+    editor: TextEditor,
+    position: Position,
+    statement: StatementType
+) {
+    let searchString = getStatementString(statement);
+    let rep = new Range(
+        position,
+        new Position(position.line, position.character + searchString.length)
+    );
+
+    // Highlighting and revealing
+    editor.selection = new Selection(rep.start, rep.end);
+    editor.revealRange(rep, TextEditorRevealType.InCenter);
+    let result = await confirmationDialog(
+        "Turn this " +
+            searchString +
+            " in line " +
+            (position.line + 1) +
+            " into an non-blocking one?" +
+            " Turning a blocking send or recv statement into an non-blocking one, can provide performance benefits." +
+            " Run 'MPI Converter Help' for more information."
+    );
+
+    if (result) {
+        if (statement === StatementType.MPI_Send) {
+            let replacer = new SendConverter(position);
+            await replacer.replace();
+        } else if (statement === StatementType.MPI_Recv) {
+            let replacer = new RecvConverter(position);
+            await replacer.replace();
+        } else {
+            window.showErrorMessage("Invalid statement");
+        }
+        window.showInformationMessage(
+            "Converted " +
+                searchString +
+                "in line " +
+                (position.line + 1) +
+                "successfully"
+        );
     }
 }

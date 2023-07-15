@@ -1,4 +1,4 @@
-import { MPI_SendType, MPI_RecvType } from "./statementsTypes";
+import { MPI_SendType, MPI_RecvType, StatementType } from "./statementsTypes";
 
 import {
     window,
@@ -9,6 +9,7 @@ import {
     TextEditorRevealType,
     Selection,
     workspace,
+    commands,
 } from "vscode";
 import { BroadcastChannel } from "worker_threads";
 import { confirmationDialog } from "./dialogs";
@@ -458,14 +459,15 @@ export function removeChars(str: string, chars: string[]) {
     return out;
 }
 
-export function findStringInDocument(editor: TextEditor, searchString: string): Position[] {
-    let posArr:Position[] = [];
+export function findStringInDocument(
+    editor: TextEditor,
+    searchString: string
+): Position[] {
+    let posArr: Position[] = [];
     let currentline = 0;
     let isInComment = false;
     while (currentline < editor.document.lineCount) {
-        let line = editor.document.lineAt(
-            new Position(currentline, 1)
-        );
+        let line = editor.document.lineAt(new Position(currentline, 1));
         if (line.isEmptyOrWhitespace) {
             currentline += 1;
             continue;
@@ -484,4 +486,27 @@ export function findStringInDocument(editor: TextEditor, searchString: string): 
     }
 
     return posArr;
+}
+
+export function runFormatter() {
+    let run_formatter = workspace
+        .getConfiguration("mpiconv")
+        .get<boolean>("runFormatter");
+    if (run_formatter === undefined) {
+        run_formatter === true;
+    }
+    if (run_formatter) {
+        commands.executeCommand("editor.action.formatDocument");
+    }
+}
+
+export function getStatementString(statement: StatementType): string {
+    switch (statement) {
+        case StatementType.MPI_Send:
+            return "MPI_Send";
+        case StatementType.MPI_Recv:
+            return "MPI_Recv";
+        default:
+            return "";
+    }
 }

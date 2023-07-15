@@ -17,7 +17,7 @@
     "commands": [
       {
         "command": "mpiconv.convertToUnblocking",
-        "title": "Convert MPI statements",
+        "title": "Convert all MPI statements",
         "icon": "RunIcon.svg",
         "shortTitle": "MPIconv"
       },
@@ -35,6 +35,12 @@
                     "dark": "resources/dark/refresh.svg"
                 },
         "shortTitle": "Refresh"
+      },
+      {
+        "command": "mpiconv.convertElement",
+        "title": "Convert MPI Statements",
+        "icon": "RunIcon.svg",
+        "shortTitle": "Convert"
       }
     ],
     "configuration": {
@@ -96,6 +102,12 @@
           "command": "mpiconv.showHelp",
           "group": "navigation",
           "when": "view == mpiconv.mpiTreeView"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "mpiconv.convertElement",
+          "group": "inline"
         }
       ]
     }
