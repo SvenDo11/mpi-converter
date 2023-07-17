@@ -114,7 +114,13 @@
           "group": "inline"
         }
       ]
+    },
+    "viewsWelcome": [
+    {
+      "view": "mpiconv.mpiTreeView",
+      "contents": "No convertable MPI instructions found.\n[Learn more](command:mpiconv.showHelp)"
     }
+  ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

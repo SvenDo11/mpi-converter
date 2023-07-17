@@ -15,6 +15,17 @@ export function getHelpHTML() {
             This Plugin is developed as part of a Master Thesis.
             Its purpose is to provide a dialog driven source to source conversion, to help MPI developers to use more modern MPI statements.
         </p>
+        <p>
+            The plugin can be accessed via the MPI icon in the activity bar.
+            There a view opens, that displays the currently visible files.
+            If a file contains MPI Statements, that can be converted, the statements will be listed underneath the according file.
+            Here the plugin can be run in three ways:
+            <ul>
+            <li>With the green arrow on the title: The plugin will convert all statements in the currently active document.</li>
+            <li>With the green arrow on a file: The plugin will convert all statements in that file.</li>
+            <li>With the green arrow on a specific statement: The plugin will convert that statement.</li>
+            </ul>
+        </p>
         <h2> Blocking vs Non-blocking MPI statements </h2>
         <p>
             Blocking MPI statements are communication functions.
