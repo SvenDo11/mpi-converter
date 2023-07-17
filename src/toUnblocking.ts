@@ -28,8 +28,8 @@ import {
     getFullRangeOfFunction,
 } from "./util";
 import { checkForLoop } from "./forloop";
-import { error } from "console";
-import { stat } from "fs";
+
+const defaultConflicts = ["return", "MPI_Finalize"];
 
 abstract class BlockingToUnblocking<MPI_Type> {
     activeEditor: TextEditor | undefined = undefined;
@@ -391,7 +391,7 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
             }
         }
         this.conflictVariableStr = [buf];
-        return [buf];
+        return [buf].concat(defaultConflicts);
     }
 
     async afterReplace(): Promise<void> {
@@ -557,7 +557,7 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
         } else {
             this.conflictVariableStr = [buf, this.status];
         }
-        return this.conflictVariableStr;
+        return this.conflictVariableStr.concat(defaultConflicts);
     }
 
     async afterReplace(): Promise<void> {
