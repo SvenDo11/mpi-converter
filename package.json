@@ -41,6 +41,10 @@
         "title": "Convert MPI Statements",
         "icon": "RunIcon.svg",
         "shortTitle": "Convert"
+      },
+      {
+        "command": "mpiconv.gotoElement",
+        "title": "Go to statment"
       }
     ],
     "configuration": {

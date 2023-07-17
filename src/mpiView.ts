@@ -15,6 +15,7 @@ import {
     TreeItemCollapsibleState,
     TextEdit,
     TextEditor,
+    Command,
 } from "vscode";
 import { findStringInDocument } from "./util";
 import { StatementType } from "./statementsTypes";
@@ -100,6 +101,12 @@ export class MPITreeItem extends TreeItem {
     private pos: Position | undefined;
     private editor: TextEditor;
     private type: StatementType;
+
+    command: Command = {
+        title: "Goto",
+        command: "mpiconv.gotoElement",
+        arguments: [this]
+    };
 
     constructor(
         public readonly label: string,

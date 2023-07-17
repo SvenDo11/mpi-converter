@@ -520,3 +520,7 @@ export function getFullRangeOfFunction(editor: TextEditor, pos: Position):Range 
     }
     return new Range(pos, editor.document.positionAt(endPos));
 }
+
+export function gotoStatement(editor:TextEditor, pos:Position): void {
+    editor.revealRange(new Range(pos, new Position(pos.line, pos.character + 1)), TextEditorRevealType.InCenter);
+}
