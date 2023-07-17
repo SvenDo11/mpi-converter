@@ -360,7 +360,7 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
             return this.conflictVariableStr;
         }
         if (this.blockingInst === undefined) {
-            throw new Error("Blocking instruciton not set!");
+            throw new Error("Blocking instruction not set!");
         }
         let buf = this.blockingInst.buf;
         let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|\&/);
@@ -381,7 +381,7 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
                     guessedbuffer,
                     "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
                 );
-                while (buf == undefined || buf.trim() === "") {
+                while (buf === undefined || buf.trim() === "") {
                     buf = await inputDialog(
                         "What is the buffer for the MPI message? (This can not be left blank)",
                         guessedbuffer,
@@ -516,39 +516,41 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
     }
 
     async getConflictVariableStr(): Promise<string[]> {
-        if (this.conflictVariableStr !== undefined) {
-            return this.conflictVariableStr;
-        }
-        if (this.blockingInst === undefined) {
-            throw new Error("Blocking instruciton not set!");
-        }
-        let buf = this.blockingInst.buf;
-        let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|&/);
-        if (statments.length > 1) {
-            let guessedbuffer = "";
-            let foundStatements = 0;
-            for (let i = 0; i < statments.length; i += 1) {
-                if (statments[i] !== "") {
-                    if (guessedbuffer == "") {
-                        guessedbuffer = statments[i];
-                    }
-                    foundStatements += 1;
-                }
+        let buf;
+        if (this.conflictVariableStr === undefined) {
+            if (this.blockingInst === undefined) {
+                throw new Error("Blocking instruciton not set!");
             }
-            if (foundStatements !== 1) {
-                buf = await inputDialog(
-                    "What is the buffer for the MPI message?",
-                    guessedbuffer,
-                    "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
-                );
-                while (buf == undefined || buf.trim() === "") {
+            buf = this.blockingInst.buf;
+            let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|&/);
+            if (statments.length > 1) {
+                let guessedbuffer = "";
+                let foundStatements = 0;
+                for (let i = 0; i < statments.length; i += 1) {
+                    if (statments[i] !== "") {
+                        if (guessedbuffer === "") {
+                            guessedbuffer = statments[i];
+                        }
+                        foundStatements += 1;
+                    }
+                }
+                if (foundStatements !== 1) {
                     buf = await inputDialog(
-                        "What is the buffer for the MPI message? (This can not be left blank)",
+                        "What is the buffer for the MPI message?",
                         guessedbuffer,
                         "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
                     );
+                    while (buf === undefined || buf.trim() === "") {
+                        buf = await inputDialog(
+                            "What is the buffer for the MPI message? (This can not be left blank)",
+                            guessedbuffer,
+                            "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
+                        );
+                    }
                 }
             }
+        } else {
+            buf = this.conflictVariableStr[0];
         }
         if (this.status === "MPI_STATUS_IGNORE") {
             this.conflictVariableStr = [buf];
@@ -678,7 +680,7 @@ export async function convertStatement(
     // Highlighting and revealing
     editor.selection = new Selection(rep.start, rep.end);
     editor.revealRange(rep, TextEditorRevealType.InCenter);
-    let fullRange = getFullRangeOfFunction(editor, position)
+    let fullRange = getFullRangeOfFunction(editor, position);
     let decoration = window.createTextEditorDecorationType({borderColor: "red", borderStyle: "solid", borderSpacing: "10"});
     editor.setDecorations(decoration,[fullRange]);
     let result = await confirmationDialog(
