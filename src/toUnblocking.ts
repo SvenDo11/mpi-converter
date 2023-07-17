@@ -706,9 +706,9 @@ export async function convertStatement(
         window.showInformationMessage(
             "Converted " +
                 searchString +
-                "in line " +
+                " in line " +
                 (position.line + 1) +
-                "successfully"
+                " successfully"
         );
     }
     decoration.dispose();
