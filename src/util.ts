@@ -1,4 +1,9 @@
-import { MPI_SendType, MPI_RecvType, StatementType } from "./statementsTypes";
+import {
+    MPI_SendType,
+    MPI_RecvType,
+    StatementType,
+    MPI_ReduceType,
+} from "./statementsTypes";
 
 import {
     window,
@@ -56,6 +61,23 @@ export function recvToIrecv(
     outstr += sendSmt.source + ", ";
     outstr += sendSmt.tag + ", ";
     outstr += sendSmt.comm + ", ";
+    outstr += "&" + requestName + ");";
+
+    return outstr;
+}
+
+export function reduceToIreduce(
+    reduceSmt: MPI_ReduceType,
+    requestName: string
+): string {
+    let outstr = "MPI_Ireduce(";
+    outstr += reduceSmt.sendbuf + ", ";
+    outstr += reduceSmt.recvbuf + ",";
+    outstr += reduceSmt.count + ", ";
+    outstr += reduceSmt.datatype + ", ";
+    outstr += reduceSmt.op + ", ";
+    outstr += reduceSmt.root + ", ";
+    outstr += reduceSmt.comm + ", ";
     outstr += "&" + requestName + ");";
 
     return outstr;
@@ -506,21 +528,29 @@ export function getStatementString(statement: StatementType): string {
             return "MPI_Send";
         case StatementType.MPI_Recv:
             return "MPI_Recv";
+        case StatementType.MPI_Reduce:
+            return "MPI_Reduce";
         default:
             return "";
     }
 }
 
-export function getFullRangeOfFunction(editor: TextEditor, pos: Position):Range {
+export function getFullRangeOfFunction(
+    editor: TextEditor,
+    pos: Position
+): Range {
     let startPos = editor.document.offsetAt(pos);
     let codeStr = removeComments(editor.document.getText()).line;
-    let endPos = codeStr.indexOf(")",startPos);
-    if(endPos === -1) {
+    let endPos = codeStr.indexOf(")", startPos);
+    if (endPos === -1) {
         endPos = startPos;
     }
     return new Range(pos, editor.document.positionAt(endPos));
 }
 
-export function gotoStatement(editor:TextEditor, pos:Position): void {
-    editor.revealRange(new Range(pos, new Position(pos.line, pos.character + 1)), TextEditorRevealType.InCenter);
+export function gotoStatement(editor: TextEditor, pos: Position): void {
+    editor.revealRange(
+        new Range(pos, new Position(pos.line, pos.character + 1)),
+        TextEditorRevealType.InCenter
+    );
 }

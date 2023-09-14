@@ -43,6 +43,10 @@
         "shortTitle": "Convert"
       },
       {
+        "command": "mpiconv.showOff",
+        "title": "Show of features"
+      },
+      {
         "command": "mpiconv.gotoElement",
         "title": "Go to statment"
       }

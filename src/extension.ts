@@ -5,6 +5,7 @@ import { blockingToUnblockingMain, convertStatement } from "./toUnblocking";
 import { getHelpHTML } from "./webviews";
 import { MPIStatementProvider, MPITreeItem } from "./mpiView";
 import { runFormatter, gotoStatement } from "./util";
+import { inputDialog } from "./dialogs";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -76,13 +77,28 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
-    vscode.commands.registerCommand("mpiconv.gotoElement", (elem : MPITreeItem) => {
-        if(elem.isFile()){
-            return;
-        }
-
-        gotoStatement(elem.getEditor(), elem.getPosition());
+    let showOff = vscode.commands.registerCommand("mpiconv.showOff", () => {
+        vscode.window.showInformationMessage(
+            'This is a notification. The used variant is "information"',
+            "This is a Button"
+        );
+        inputDialog(
+            "This is a dialog.",
+            "User Input",
+            "More information can be displayed here!"
+        );
     });
+
+    vscode.commands.registerCommand(
+        "mpiconv.gotoElement",
+        (elem: MPITreeItem) => {
+            if (elem.isFile()) {
+                return;
+            }
+
+            gotoStatement(elem.getEditor(), elem.getPosition());
+        }
+    );
 
     context.subscriptions.push(convertToUnblocking);
     context.subscriptions.push(showHelp);

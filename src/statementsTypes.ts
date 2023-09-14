@@ -17,8 +17,19 @@ export interface MPI_RecvType {
     status: string;
 }
 
+export interface MPI_ReduceType {
+    sendbuf: string;
+    recvbuf: string;
+    count: string;
+    datatype: string;
+    op: string;
+    root: string;
+    comm: string;
+}
+
 export enum StatementType {
     MPI_Send,
     MPI_Recv,
+    MPI_Reduce,
     Other,
 }

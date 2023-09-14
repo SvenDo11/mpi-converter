@@ -58,6 +58,7 @@ export class MPIStatementProvider implements TreeDataProvider<MPITreeItem> {
         // TODO: check for MPI files only
         let sendPos = findStringInDocument(activeEditor, "MPI_Send");
         let recvPos = findStringInDocument(activeEditor, "MPI_Recv");
+        let reducePos = findStringInDocument(activeEditor, "MPI_Reduce");
         let items: MPITreeItem[] = [];
 
         for (let pos of sendPos) {
@@ -76,6 +77,16 @@ export class MPIStatementProvider implements TreeDataProvider<MPITreeItem> {
                     "MPI_Recv Line " + (pos.line + 1),
                     activeEditor,
                     StatementType.MPI_Recv,
+                    pos
+                )
+            );
+        }
+        for (let pos of reducePos) {
+            items.push(
+                new MPITreeItem(
+                    "MPI_Reduce Line " + (pos.line + 1),
+                    activeEditor,
+                    StatementType.MPI_Reduce,
                     pos
                 )
             );
@@ -105,7 +116,7 @@ export class MPITreeItem extends TreeItem {
     command: Command = {
         title: "Goto",
         command: "mpiconv.gotoElement",
-        arguments: [this]
+        arguments: [this],
     };
 
     constructor(

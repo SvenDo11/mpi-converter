@@ -6,6 +6,10 @@
 #define N 1000000
 #define SEED 134895689
 
+void doOtherStuff()
+{
+}
+
 double foo(int value)
 {
     return sqrt((double)value / 100.0);
@@ -90,6 +94,28 @@ void verify(double value, int n, int *buffer)
     }
 }
 
+int otherTest(int world_rank, int world_size)
+{
+    double sum = 0;
+    for (int ii = 0; ii < 100; ii++)
+    {
+        sum += ii * world_rank;
+    }
+    double total;
+    MPI_Status status;
+    MPI_Request request;
+    MPI_Ireduce(&sum, &total, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD, &request);
+
+    doOtherStuff();
+    MPI_Wait(&request, &status);
+
+    if (world_rank == 0)
+    {
+        std::cout << "Total is: " << total << "!" << std::endl;
+    }
+    return sum;
+}
+
 int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
@@ -106,6 +132,14 @@ int main(int argc, char **argv)
     // Get the rank of the process
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+    bool flag = true;
+    if (flag)
+    {
+        otherTest(world_rank, world_size);
+        MPI_Finalize();
+        return 0;
+    }
 
     int n = N;
     if (world_rank == world_size - 1)
