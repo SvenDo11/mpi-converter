@@ -1,8 +1,11 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import { blockingToUnblockingMain } from "./toUnblocking";
+import { blockingToUnblockingMain, convertStatement } from "./toUnblocking";
 import { getHelpHTML } from "./webviews";
+import { MPIStatementProvider, MPITreeItem } from "./mpiView";
+import { runFormatter, gotoStatement } from "./util";
+import { inputDialog } from "./dialogs";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -14,7 +17,11 @@ export function activate(context: vscode.ExtensionContext) {
     let convertToUnblocking = vscode.commands.registerCommand(
         "mpiconv.convertToUnblocking",
         () => {
-            blockingToUnblockingMain();
+            let promise = blockingToUnblockingMain();
+            promise.then(() => {
+                MPITreeProvider.refresh();
+                runFormatter();
+            });
         }
     );
 
@@ -33,8 +40,77 @@ export function activate(context: vscode.ExtensionContext) {
         panel.webview.html = getHelpHTML();
     });
 
+    const MPITreeProvider = new MPIStatementProvider();
+
+    let refreshTree = vscode.commands.registerCommand(
+        "mpiconv.refreshTree",
+        () => {
+            MPITreeProvider.refresh();
+        }
+    );
+
+    let convertSingle = vscode.commands.registerCommand(
+        "mpiconv.convertElement",
+        (elem: MPITreeItem) => {
+            vscode.window
+                .showTextDocument(elem.getEditor().document, {
+                    preview: false,
+                    preserveFocus: false,
+                    viewColumn: elem.getEditor().viewColumn,
+                })
+                .then(() => {
+                    let promise: Promise<void>;
+                    if (elem.isFile()) {
+                        promise = blockingToUnblockingMain();
+                    } else {
+                        promise = convertStatement(
+                            elem.getEditor(),
+                            elem.getPosition(),
+                            elem.getType()
+                        );
+                    }
+                    promise.then(() => {
+                        MPITreeProvider.refresh();
+                        runFormatter();
+                    });
+                });
+        }
+    );
+
+    let showOff = vscode.commands.registerCommand("mpiconv.showOff", () => {
+        vscode.window.showInformationMessage(
+            'This is a notification. The used variant is "information"',
+            "This is a Button"
+        );
+        inputDialog(
+            "This is a dialog.",
+            "User Input",
+            "More information can be displayed here!"
+        );
+    });
+
+    vscode.commands.registerCommand(
+        "mpiconv.gotoElement",
+        (elem: MPITreeItem) => {
+            if (elem.isFile()) {
+                return;
+            }
+
+            gotoStatement(elem.getEditor(), elem.getPosition());
+        }
+    );
+
     context.subscriptions.push(convertToUnblocking);
     context.subscriptions.push(showHelp);
+    context.subscriptions.push(refreshTree);
+
+    vscode.window.registerTreeDataProvider(
+        "mpiconv.mpiTreeView",
+        MPITreeProvider
+    );
+    vscode.window.onDidChangeVisibleTextEditors((e) => {
+        MPITreeProvider.refresh();
+    });
 }
 
 // This method is called when your extension is deactivated

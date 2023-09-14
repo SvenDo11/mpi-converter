@@ -8,10 +8,17 @@ import {
     TextEditor,
     commands,
     workspace,
+    Color,
+    ThemeColor,
 } from "vscode";
 
 import { confirmationDialog, inputDialog } from "./dialogs";
-import { MPI_SendType, MPI_RecvType } from "./statementsTypes";
+import {
+    MPI_SendType,
+    MPI_RecvType,
+    StatementType,
+    MPI_ReduceType,
+} from "./statementsTypes";
 import {
     sendToIsend,
     recvToIrecv,
@@ -21,10 +28,15 @@ import {
     extractParams,
     removeComments,
     removeChars,
+    runFormatter,
+    getStatementString,
+    getFullRangeOfFunction,
+    reduceToIreduce,
 } from "./util";
 import { checkForLoop } from "./forloop";
-import { error } from "console";
 import { stat } from "fs";
+
+const defaultConflicts = ["return", "MPI_Finalize"];
 
 abstract class BlockingToUnblocking<MPI_Type> {
     activeEditor: TextEditor | undefined = undefined;
@@ -42,7 +54,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
     status = "status";
     request = "request";
 
-    constructor(public pos: Position) {}
+    constructor(public pos: Position, public canBeLoop: Boolean = true) {}
 
     abstract getInstruction(): MPI_Type;
 
@@ -64,7 +76,7 @@ abstract class BlockingToUnblocking<MPI_Type> {
 
         let editorPos = this.pos;
 
-        let isForLoop = await checkForLoop(editorPos);
+        let isForLoop = this.canBeLoop ? await checkForLoop(editorPos) : false;
         this.isLoop = isForLoop instanceof Position;
 
         let foundWaitPos = editorPos;
@@ -355,7 +367,7 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
             return this.conflictVariableStr;
         }
         if (this.blockingInst === undefined) {
-            throw new Error("Blocking instruciton not set!");
+            throw new Error("Blocking instruction not set!");
         }
         let buf = this.blockingInst.buf;
         let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|\&/);
@@ -376,7 +388,7 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
                     guessedbuffer,
                     "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
                 );
-                while (buf == undefined || buf.trim() === "") {
+                while (buf === undefined || buf.trim() === "") {
                     buf = await inputDialog(
                         "What is the buffer for the MPI message? (This can not be left blank)",
                         guessedbuffer,
@@ -386,7 +398,7 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
             }
         }
         this.conflictVariableStr = [buf];
-        return [buf];
+        return [buf].concat(defaultConflicts);
     }
 
     async afterReplace(): Promise<void> {
@@ -511,46 +523,50 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
     }
 
     async getConflictVariableStr(): Promise<string[]> {
-        if (this.conflictVariableStr !== undefined) {
-            return this.conflictVariableStr;
-        }
-        if (this.blockingInst === undefined) {
-            throw new Error("Blocking instruciton not set!");
-        }
-        let buf = this.blockingInst.buf;
-        let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|&/);
-        if (statments.length > 1) {
-            let guessedbuffer = "";
-            let foundStatements = 0;
-            for (let i = 0; i < statments.length; i += 1) {
-                if (statments[i] !== "") {
-                    if (guessedbuffer == "") {
-                        guessedbuffer = statments[i];
-                    }
-                    foundStatements += 1;
-                }
+        let buf;
+        if (this.conflictVariableStr === undefined) {
+            if (this.blockingInst === undefined) {
+                throw new Error("Blocking instruciton not set!");
             }
-            if (foundStatements !== 1) {
-                buf = await inputDialog(
-                    "What is the buffer for the MPI message?",
-                    guessedbuffer,
-                    "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
-                );
-                while (buf == undefined || buf.trim() === "") {
+            buf = this.blockingInst.buf;
+            let statments = buf.split(
+                / |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|&/
+            );
+            if (statments.length > 1) {
+                let guessedbuffer = "";
+                let foundStatements = 0;
+                for (let i = 0; i < statments.length; i += 1) {
+                    if (statments[i] !== "") {
+                        if (guessedbuffer === "") {
+                            guessedbuffer = statments[i];
+                        }
+                        foundStatements += 1;
+                    }
+                }
+                if (foundStatements !== 1) {
                     buf = await inputDialog(
-                        "What is the buffer for the MPI message? (This can not be left blank)",
+                        "What is the buffer for the MPI message?",
                         guessedbuffer,
                         "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
                     );
+                    while (buf === undefined || buf.trim() === "") {
+                        buf = await inputDialog(
+                            "What is the buffer for the MPI message? (This can not be left blank)",
+                            guessedbuffer,
+                            "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
+                        );
+                    }
                 }
             }
+        } else {
+            buf = this.conflictVariableStr[0];
         }
         if (this.status === "MPI_STATUS_IGNORE") {
             this.conflictVariableStr = [buf];
         } else {
             this.conflictVariableStr = [buf, this.status];
         }
-        return this.conflictVariableStr;
+        return this.conflictVariableStr.concat(defaultConflicts);
     }
 
     async afterReplace(): Promise<void> {
@@ -610,79 +626,210 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
     }
 }
 
-export async function blockingToUnblockingMain() {
-    console.log("Got here");
+class ReduceConverter extends BlockingToUnblocking<MPI_ReduceType> {
+    conflictVariableStr: string[] | undefined = undefined;
 
+    constructor(reducePos: Position) {
+        super(reducePos, false);
+    }
+
+    getInstruction(): MPI_ReduceType {
+        if (this.activeEditor === undefined) {
+            throw new Error("activeEditor was not set.");
+        }
+        let params = extractParams(
+            removeComments(this.codestr).line,
+            this.activeEditor.document.offsetAt(this.pos)
+        );
+
+        if (params.length !== 7) {
+            throw new Error(
+                "Did not get the appropriate amount of parameters from function. Expected 7 but got " +
+                    params.length +
+                    "!"
+            );
+        }
+        let sendSmt: MPI_ReduceType = {
+            sendbuf: params[0],
+            recvbuf: params[1],
+            count: params[2],
+            datatype: params[3],
+            op: params[4],
+            root: params[5],
+            comm: params[6],
+        };
+        return sendSmt;
+    }
+
+    async getPrefixStr(): Promise<string> {
+        this.status = await inputDialog(
+            "What should the status variable be named?:",
+            "status",
+            "Make sure to use a unique variable name in the current domain. (Or just 'MPI_STATUS_IGNORE')"
+        );
+        if (this.status === undefined || this.status.trim() === "") {
+            this.status === "/* ENTER STATUS VARIABLE */";
+        }
+        this.request = await inputDialog(
+            "What should the request variable be named?:",
+            "request",
+            "Make sure to use a unique variable name in the current domain."
+        );
+        if (this.request === undefined || this.request.trim() === "") {
+            this.request === "/* ENTER REQUEST VARIABLE */";
+        }
+
+        let statusStr = "MPI_Status " + this.status + ";";
+        let requestStr = "MPI_Request " + this.request + ";";
+        if (this.isLoop) {
+            statusStr =
+                "MPI_Status  " + this.status + "[" + this.loopCntStr + "];";
+            requestStr =
+                "MPI_Request " + this.request + "[" + this.loopCntStr + "];";
+        }
+        let returnStr =
+            this.status === "MPI_STATUS_IGNORE"
+                ? requestStr
+                : statusStr + "\n" + requestStr;
+        return returnStr;
+    }
+
+    getSuffixStr(): string {
+        let status = this.status;
+        if (status !== "MPI_STATUS_IGNORE") {
+            status = "&" + status;
+        }
+        let waitStr = "MPI_Wait(&" + this.request + ", " + status + ");";
+        if (this.isLoop) {
+            if (status !== "MPI_STATUS_IGNORE") {
+                status = "MPI_STATUSES_IGNORE";
+            }
+            waitStr =
+                "MPI_Waitall(" +
+                this.loopCntStr +
+                ", " +
+                this.request +
+                ", " +
+                this.status +
+                ");";
+        }
+        return waitStr;
+    }
+
+    transformToUnblocking(): string {
+        if (this.blockingInst === undefined) {
+            throw new Error("Blocking instruciton not set!");
+        }
+        return reduceToIreduce(
+            this.blockingInst,
+            this.isLoop
+                ? this.request + "[" + this.loopIterator + "]"
+                : this.request
+        );
+    }
+
+    async getSingleBuffer(buffer: string, buffername: string = "buffer") {
+        let buf = buffer;
+        let statments = buf.split(/ |,|\(|\)|\{|\}|;|=|\/|\+|\-|\*|\[|\]|\&/);
+        if (statments.length > 1) {
+            let guessedbuffer = "";
+            let foundStatements = 0;
+            for (let i = 0; i < statments.length; i += 1) {
+                if (statments[i] !== "") {
+                    if (guessedbuffer === "") {
+                        guessedbuffer = statments[i];
+                    }
+                    foundStatements += 1;
+                }
+            }
+            if (foundStatements !== 1) {
+                buf = await inputDialog(
+                    "What is the " + buffername + " for the MPI message?",
+                    guessedbuffer,
+                    "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
+                );
+                while (buf === undefined || buf.trim() === "") {
+                    buf = await inputDialog(
+                        "What is the " +
+                            buffername +
+                            " for the MPI message? (This can not be left blank)",
+                        guessedbuffer,
+                        "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
+                    );
+                }
+            } else {
+                buf = guessedbuffer;
+            }
+        }
+        return buf;
+    }
+
+    async getConflictVariableStr(): Promise<string[]> {
+        if (this.conflictVariableStr !== undefined) {
+            return this.conflictVariableStr;
+        }
+        if (this.blockingInst === undefined) {
+            throw new Error("Blocking instruction not set!");
+        }
+
+        this.conflictVariableStr = [
+            await this.getSingleBuffer(
+                this.blockingInst.sendbuf,
+                "send buffer"
+            ),
+            await this.getSingleBuffer(
+                this.blockingInst.recvbuf,
+                "recieve buffer"
+            ),
+        ];
+        return this.conflictVariableStr.concat(defaultConflicts);
+    }
+
+    async afterReplace(): Promise<void> {
+        // Empty on purpose;
+    }
+}
+
+export async function blockingToUnblockingMain() {
     let activeEditor = window.activeTextEditor;
     if (activeEditor === undefined) {
         return;
     }
 
     let found_something = false;
-    let searchStrings = ["MPI_Send", "MPI_Recv"];
-    for (let i = 0; i < 2; i += 1) {
-        let searchString = searchStrings[i];
-        let currentline = 0;
-        let isInComment = false;
-        while (currentline < activeEditor.document.lineCount) {
-            let line = activeEditor.document.lineAt(
-                new Position(currentline, 1)
-            );
-            if (line.isEmptyOrWhitespace) {
-                currentline += 1;
-                continue;
-            }
-            let commentReturn = removeComments(line.text, isInComment);
-            let lineTxt = commentReturn.line;
-            isInComment = commentReturn.isInComment;
-            let index = lineTxt.indexOf(searchString);
-            if (index === -1) {
-                currentline += 1;
-                continue;
-            }
-            found_something = true;
-            let position = new Position(currentline, index);
-            let rep = new Range(
-                position,
-                new Position(
-                    position.line,
-                    position.character + searchString.length
-                )
-            );
-            // Highlighting and revealing
-            activeEditor.selection = new Selection(rep.start, rep.end);
-            activeEditor.revealRange(rep, TextEditorRevealType.InCenter);
-            let result = await confirmationDialog(
-                "Turn this " +
-                    searchString +
-                    " in line " +
-                    (currentline + 1) +
-                    " into an non-blocking one?" +
-                    " Turning a blocking send or recv statement into an non-blocking one, can provide performance benefits." +
-                    " Run 'MPI Converter Help' for more information."
-            );
-
-            if (result) {
-                if (i === 0) {
-                    let replacer = new SendConverter(position);
-                    await replacer.replace();
-                } else {
-                    let replacer = new RecvConverter(position);
-                    await replacer.replace();
-                }
-            }
-
+    let searchStrings = ["MPI_Send", "MPI_Recv", "MPI_Reduce"];
+    let currentline = 0;
+    let isInComment = false;
+    while (currentline < activeEditor.document.lineCount) {
+        let line = activeEditor.document.lineAt(new Position(currentline, 1));
+        if (line.isEmptyOrWhitespace) {
             currentline += 1;
+            continue;
         }
-    }
-    let run_formatter = workspace
-        .getConfiguration("mpiconv")
-        .get<boolean>("runFormatter");
-    if (run_formatter === undefined) {
-        run_formatter === true;
-    }
-    if (run_formatter) {
-        commands.executeCommand("editor.action.formatDocument");
+        let commentReturn = removeComments(line.text, isInComment);
+        let lineTxt = commentReturn.line;
+        isInComment = commentReturn.isInComment;
+        if (!containsVariables(lineTxt, searchStrings)) {
+            currentline += 1;
+            continue;
+        }
+        let indexes = searchStrings.map((searchString) => {
+            return lineTxt.indexOf(searchString);
+        });
+        found_something = true;
+        for (let i = 0; i < indexes.length; i += 1) {
+            if (indexes[i] === -1) {
+                continue;
+            }
+            let position = new Position(currentline, indexes[i]);
+            await convertStatement(
+                activeEditor,
+                position,
+                i === 0 ? StatementType.MPI_Send : StatementType.MPI_Recv
+            );
+        }
+
+        currentline += 1;
     }
 
     if (found_something) {
@@ -690,4 +837,59 @@ export async function blockingToUnblockingMain() {
     } else {
         window.showInformationMessage("No relevant MPI statements found!");
     }
+}
+
+export async function convertStatement(
+    editor: TextEditor,
+    position: Position,
+    statement: StatementType
+) {
+    let searchString = getStatementString(statement);
+    let rep = new Range(
+        position,
+        new Position(position.line, position.character + searchString.length)
+    );
+
+    // Highlighting and revealing
+    editor.selection = new Selection(rep.start, rep.end);
+    editor.revealRange(rep, TextEditorRevealType.InCenter);
+    let fullRange = getFullRangeOfFunction(editor, position);
+    let decoration = window.createTextEditorDecorationType({
+        borderColor: "red",
+        borderStyle: "solid",
+        borderSpacing: "10",
+    });
+    editor.setDecorations(decoration, [fullRange]);
+    let result = await confirmationDialog(
+        "Turn this " +
+            searchString +
+            " in line " +
+            (position.line + 1) +
+            " into an non-blocking one?" +
+            " Turning a blocking send or recv statement into an non-blocking one, can provide performance benefits." +
+            " Run 'MPI Converter Help' for more information."
+    );
+
+    if (result) {
+        if (statement === StatementType.MPI_Send) {
+            let replacer = new SendConverter(position);
+            await replacer.replace();
+        } else if (statement === StatementType.MPI_Recv) {
+            let replacer = new RecvConverter(position);
+            await replacer.replace();
+        } else if (statement === StatementType.MPI_Reduce) {
+            let replacer = new ReduceConverter(position);
+            await replacer.replace();
+        } else {
+            window.showErrorMessage("Invalid statement");
+        }
+        window.showInformationMessage(
+            "Converted " +
+                searchString +
+                " in line " +
+                (position.line + 1) +
+                " successfully"
+        );
+    }
+    decoration.dispose();
 }

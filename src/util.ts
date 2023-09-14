@@ -1,4 +1,9 @@
-import { MPI_SendType, MPI_RecvType } from "./statementsTypes";
+import {
+    MPI_SendType,
+    MPI_RecvType,
+    StatementType,
+    MPI_ReduceType,
+} from "./statementsTypes";
 
 import {
     window,
@@ -9,6 +14,7 @@ import {
     TextEditorRevealType,
     Selection,
     workspace,
+    commands,
 } from "vscode";
 import { BroadcastChannel } from "worker_threads";
 import { confirmationDialog } from "./dialogs";
@@ -55,6 +61,23 @@ export function recvToIrecv(
     outstr += sendSmt.source + ", ";
     outstr += sendSmt.tag + ", ";
     outstr += sendSmt.comm + ", ";
+    outstr += "&" + requestName + ");";
+
+    return outstr;
+}
+
+export function reduceToIreduce(
+    reduceSmt: MPI_ReduceType,
+    requestName: string
+): string {
+    let outstr = "MPI_Ireduce(";
+    outstr += reduceSmt.sendbuf + ", ";
+    outstr += reduceSmt.recvbuf + ",";
+    outstr += reduceSmt.count + ", ";
+    outstr += reduceSmt.datatype + ", ";
+    outstr += reduceSmt.op + ", ";
+    outstr += reduceSmt.root + ", ";
+    outstr += reduceSmt.comm + ", ";
     outstr += "&" + requestName + ");";
 
     return outstr;
@@ -456,4 +479,78 @@ export function removeChars(str: string, chars: string[]) {
         }
     }
     return out;
+}
+
+export function findStringInDocument(
+    editor: TextEditor,
+    searchString: string
+): Position[] {
+    let posArr: Position[] = [];
+    let currentline = 0;
+    let isInComment = false;
+    while (currentline < editor.document.lineCount) {
+        let line = editor.document.lineAt(new Position(currentline, 1));
+        if (line.isEmptyOrWhitespace) {
+            currentline += 1;
+            continue;
+        }
+        let commentReturn = removeComments(line.text, isInComment);
+        let lineTxt = commentReturn.line;
+        isInComment = commentReturn.isInComment;
+        let index = lineTxt.indexOf(searchString);
+        if (index === -1) {
+            currentline += 1;
+            continue;
+        }
+        let position = new Position(currentline, index);
+        posArr.push(position);
+        currentline += 1;
+    }
+
+    return posArr;
+}
+
+export function runFormatter() {
+    let run_formatter = workspace
+        .getConfiguration("mpiconv")
+        .get<boolean>("runFormatter");
+    if (run_formatter === undefined) {
+        run_formatter === true;
+    }
+    if (run_formatter) {
+        commands.executeCommand("editor.action.formatDocument");
+    }
+}
+
+export function getStatementString(statement: StatementType): string {
+    switch (statement) {
+        case StatementType.MPI_Send:
+            return "MPI_Send";
+        case StatementType.MPI_Recv:
+            return "MPI_Recv";
+        case StatementType.MPI_Reduce:
+            return "MPI_Reduce";
+        default:
+            return "";
+    }
+}
+
+export function getFullRangeOfFunction(
+    editor: TextEditor,
+    pos: Position
+): Range {
+    let startPos = editor.document.offsetAt(pos);
+    let codeStr = removeComments(editor.document.getText()).line;
+    let endPos = codeStr.indexOf(")", startPos);
+    if (endPos === -1) {
+        endPos = startPos;
+    }
+    return new Range(pos, editor.document.positionAt(endPos));
+}
+
+export function gotoStatement(editor: TextEditor, pos: Position): void {
+    editor.revealRange(
+        new Range(pos, new Position(pos.line, pos.character + 1)),
+        TextEditorRevealType.InCenter
+    );
 }

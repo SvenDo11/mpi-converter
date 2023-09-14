@@ -2,7 +2,7 @@
   "name": "mpiconv",
   "displayName": "mpi-source-converter",
   "description": "A tool to help mpi developers to convert blocking operations to better perfoming ones.",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "repository": {"url": "https://github.com/SvenDo11/mpi-converter.git"},
   "engines": {
     "vscode": "^1.74.0"
@@ -17,7 +17,7 @@
     "commands": [
       {
         "command": "mpiconv.convertToUnblocking",
-        "title": "Convert MPI statements",
+        "title": "Convert all MPI statements",
         "icon": "RunIcon.svg",
         "shortTitle": "MPIconv"
       },
@@ -26,6 +26,29 @@
         "title": "MPI Converter Help",
         "icon": "HelpIcon.svg",
         "shortTitle": "mpiHelp"
+      },
+      {
+        "command": "mpiconv.refreshTree",
+        "title": "Refresh MPI Converter Tree",
+        "icon": {
+                    "light": "resources/light/refresh.svg",
+                    "dark": "resources/dark/refresh.svg"
+                },
+        "shortTitle": "Refresh"
+      },
+      {
+        "command": "mpiconv.convertElement",
+        "title": "Convert MPI Statements",
+        "icon": "RunIcon.svg",
+        "shortTitle": "Convert"
+      },
+      {
+        "command": "mpiconv.showOff",
+        "title": "Show of features"
+      },
+      {
+        "command": "mpiconv.gotoElement",
+        "title": "Go to statment"
       }
     ],
     "configuration": {
@@ -66,7 +89,7 @@
     "views": {
       "mpi-converter": [
         {
-          "id": "mpiconv.webview-view",
+          "id": "mpiconv.mpiTreeView",
           "name": "Modernise MPI"
         }
       ]
@@ -76,15 +99,32 @@
         {
           "command": "mpiconv.convertToUnblocking",
           "group": "navigation",
-          "when": "view == mpiconv.webview-view"
+          "when": "view == mpiconv.mpiTreeView"
+        },
+        {
+          "command": "mpiconv.refreshTree",
+          "group": "navigation",
+          "when": "view == mpiconv.mpiTreeView"
         },
         {
           "command": "mpiconv.showHelp",
           "group": "navigation",
-          "when": "view == mpiconv.webview-view"
+          "when": "view == mpiconv.mpiTreeView"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "mpiconv.convertElement",
+          "group": "inline"
         }
       ]
+    },
+    "viewsWelcome": [
+    {
+      "view": "mpiconv.mpiTreeView",
+      "contents": "No convertable MPI instructions found.\n[Learn more](command:mpiconv.showHelp)"
     }
+  ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

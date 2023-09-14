@@ -38,7 +38,7 @@ export async function checkForLoop(pos: Position) {
     if (isForLoop) {
         if (
             await confirmationDialog(
-                "Is this mpi statement in a for loop, that can be unrolled?" +
+                "Is this mpi statement in a for loop without a datadependency between the iterations?" +
                     "\nThis is usually the case, if the loop is used to combine multiple independent send/recv statments. If the send/recv statments are dependent on the statements of the previous iteration, the loop can not be unrolled."
             )
         ) {
@@ -47,7 +47,7 @@ export async function checkForLoop(pos: Position) {
             ).line;
             let index = line.indexOf("for");
             if (index === -1) {
-                index ==
+                index =
                     activeEditor.document.lineAt(currentPos)
                         .firstNonWhitespaceCharacterIndex;
             }

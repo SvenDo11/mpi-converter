@@ -7,12 +7,12 @@
 #define SEED 134895689
 #define MAX_WORKER 1000
 
-double function(int value)
+double foo(int value)
 {
     return sqrt((double)value / 100.0);
 }
 
-double master_work(int n_ranks, int n, int *buffer)
+double master_work(int n_ranks, int n, int *values)
 {
     double solutions[n_ranks - 1];
 
@@ -20,7 +20,7 @@ double master_work(int n_ranks, int n, int *buffer)
     int dist_size = ceil((double)n / (double)n_ranks);
     for (int i = 0; i < n_ranks - 1; i++)
     {
-        MPI_Send(buffer + dist_size * i, dist_size, MPI_INT, i, 0, MPI_COMM_WORLD);
+        MPI_Send(values + dist_size * i, dist_size, MPI_INT, i, 0, MPI_COMM_WORLD);
     }
 
     // Get solution from worker. Note that exceeding MAX_WORKER should not result in issues and can therefor be ommited
@@ -33,7 +33,7 @@ double master_work(int n_ranks, int n, int *buffer)
     double total = 0;
     for (int i = dist_size * (n_ranks - 1); i < n; i++)
     {
-        total += function(buffer[i]);
+        total += foo(values[i]);
     }
 
     for (int i = 0; i < n_ranks - 1; i++)
@@ -48,17 +48,17 @@ void worker_work(int n_ranks, int rank, int n)
 {
     MPI_Status status;
     int dist_size = ceil((double)n / (double)n_ranks);
-    int buffer[dist_size];
+    int values[dist_size];
 
     // Recv initial values from master
-    MPI_Recv(buffer, dist_size, MPI_INT, n_ranks - 1, 0, MPI_COMM_WORLD, &status);
+    MPI_Recv(values, dist_size, MPI_INT, n_ranks - 1, 0, MPI_COMM_WORLD, &status);
 
     // Calculate own buffer
     std::cout << "Worker " << rank << " starts working!" << std::endl;
     double total = 0;
     for (int i = 0; i < dist_size; i++)
     {
-        total += function(buffer[i]);
+        total += foo(values[i]);
     }
 
     // Return result to master
@@ -72,7 +72,7 @@ void verify(double value, int n, int *buffer)
     double ref_value = 0;
     for (int i = 0; i < n; i++)
     {
-        ref_value += function(buffer[i]);
+        ref_value += foo(buffer[i]);
     }
 
     if (std::abs(value - ref_value) < 0.0001)

@@ -2,31 +2,42 @@
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
+#include <random>
+#include <fstream>
 
-#define N 100000000
+// #define N 100000000
+#define N 1000
 #define SEED 134895689
 #define MAX_WORKER 1000
 
-double foo(int value)
+double foo(double value, double *vals, int n_vals)
 {
-    return sqrt((double)value / 100.0);
+    double result = 0.0;
+    for (int i = 0; i < n_vals; i++)
+    {
+        if (vals[i] == value)
+        {
+            result += vals[i];
+        }
+    }
+    return result;
 }
 
-void worker_work(int n_ranks, int rank, int n)
+void worker_work(int n_ranks, int rank, int n, double *vals, int n_vals)
 {
     MPI_Status status;
     int dist_size = ceil((double)n / (double)n_ranks);
-    int values[dist_size];
+    double *values = new double[dist_size];
 
     // Recv initial values from master
-    MPI_Recv(values, dist_size, MPI_INT, n_ranks - 1, 0, MPI_COMM_WORLD, &status);
+    MPI_Recv(values, dist_size, MPI_DOUBLE, n_ranks - 1, 0, MPI_COMM_WORLD, &status);
 
     // Calculate own buffer
     std::cout << "Worker " << rank << " starts working!" << std::endl;
     double total = 0;
     for (int i = 0; i < dist_size; i++)
     {
-        total += foo(values[i]);
+        total += foo(values[i], vals, n_vals);
     }
 
     // Return result to master
@@ -35,7 +46,7 @@ void worker_work(int n_ranks, int rank, int n)
     std::cout << "Worker " << rank << " finished working!" << std::endl;
 }
 
-double master_work(int n_ranks, int n, int *values)
+double master_work(int n_ranks, int n, double *values, double *vals, int n_vals)
 {
     double solutions[n_ranks - 1];
 
@@ -43,7 +54,7 @@ double master_work(int n_ranks, int n, int *values)
     int dist_size = ceil((double)n / (double)n_ranks);
     for (int i = 0; i < n_ranks - 1; i++)
     {
-        MPI_Send(values + dist_size * i, dist_size, MPI_INT, i, 0, MPI_COMM_WORLD);
+        MPI_Send(values + dist_size * i, dist_size, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
     }
 
     // Get solution from worker. Note that exceeding MAX_WORKER should not result in issues and can therefor be ommited
@@ -56,7 +67,7 @@ double master_work(int n_ranks, int n, int *values)
     double total = 0;
     for (int i = dist_size * (n_ranks - 1); i < n; i++)
     {
-        total += foo(values[i]);
+        total += foo(values[i], vals, n_vals);
     }
 
     for (int i = 0; i < n_ranks - 1; i++)
@@ -65,24 +76,6 @@ double master_work(int n_ranks, int n, int *values)
     }
     std::cout << "Master finished working!" << std::endl;
     return total;
-}
-
-void verify(double value, int n, int *buffer)
-{
-    double ref_value = 0;
-    for (int i = 0; i < n; i++)
-    {
-        ref_value += foo(buffer[i]);
-    }
-
-    if (std::abs(value - ref_value) < 0.0001)
-    {
-        std::cout << "MPI distributed algorithm found correct value: " << value << std::endl;
-    }
-    else
-    {
-        std::cout << "MPI distributed algorithm found value: " << value << ", but should be: " << ref_value << std::endl;
-    }
 }
 
 int main(int argc, char **argv)
@@ -101,27 +94,47 @@ int main(int argc, char **argv)
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> dist(0, 25500);
+
+    double *vals = new double[25500];
+    for (int ii = 0; ii < 25500; ii++)
+    {
+        vals[ii] = dist(generator);
+    }
+
     int n = N;
+    MPI_Barrier(MPI_COMM_WORLD);
+    double start_time = MPI_Wtime();
     if (world_rank == world_size - 1)
     {
-
-        int buffer[n];
-        std::srand(SEED);
+        double *buffer = new double[n];
 
         // Fill buffer
         for (int i = 0; i < n; i++)
         {
-            buffer[i] = std::rand() % 100;
+            buffer[i] = dist(generator);
         }
 
-        double result = master_work(world_size, n, buffer);
+        double result = master_work(world_size, n, buffer, vals, 25500);
 
-        verify(result, n, buffer);
+        delete[] buffer;
     }
     else
     {
-        worker_work(world_size, world_rank, n);
+        worker_work(world_size, world_rank, n, vals, 25500);
     }
+    MPI_Barrier(MPI_COMM_WORLD);
+    double end_time = MPI_Wtime();
 
+    if (world_rank == world_size - 1)
+    {
+        std::cout << "Elapsed time: " << (end_time - start_time) << std::endl;
+        std::ofstream file;
+        file.open("text.txt", std::ios::app);
+        file << (end_time - start_time) << std::endl;
+        file.close();
+    }
+    delete[] vals;
     MPI_Finalize();
 }
