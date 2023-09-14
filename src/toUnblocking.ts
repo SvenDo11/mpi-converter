@@ -395,6 +395,8 @@ class SendConverter extends BlockingToUnblocking<MPI_SendType> {
                         "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
                     );
                 }
+            } else {
+                buf = guessedbuffer;
             }
         }
         this.conflictVariableStr = [buf];
@@ -556,6 +558,8 @@ class RecvConverter extends BlockingToUnblocking<MPI_RecvType> {
                             "You need to provide the name of the buffer variable of the MPI message. This is the array you specify in the first parameter."
                         );
                     }
+                } else {
+                    buf = guessedbuffer;
                 }
             }
         } else {

@@ -2,7 +2,7 @@
   "name": "mpiconv",
   "displayName": "mpi-source-converter",
   "description": "A tool to help mpi developers to convert blocking operations to better perfoming ones.",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "repository": {"url": "https://github.com/SvenDo11/mpi-converter.git"},
   "engines": {
     "vscode": "^1.74.0"
