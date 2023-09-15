@@ -83,14 +83,6 @@ void verify(double value, int n, int *buffer)
     }
 }
 
-double worker_reduce(int n_ranks, int rank, int n)
-{
-}
-
-double master_reduce(double value, int n, int *values)
-{
-}
-
 int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
